@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NLP em Súmulas CBF</title>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.6.0/dist/reveal.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #E1E2E5;
+      --red: #EE2617;
+      --amber: #F2A241;
+      --green: #558934;
+      --blue: #0E54B6;
+      --black: #000000;
+      --white: #FFFFFF;
+      --muted: rgba(0, 0, 0, 0.68);
+      --line: rgba(16, 16, 16, 0.18);
+      --shadow: 0 10px 26px rgba(16, 16, 16, 0.08);
+    }
+
+    .reveal-viewport,
+    .reveal {
+      background: var(--bg);
+    }
+
+    .reveal {
+      color: var(--black);
+      font-family: "Inter", Arial, sans-serif;
+      font-size: 19px;
+    }
+
+    .reveal .slides {
+      text-align: left;
+    }
+
+    .reveal .slides section {
+      box-sizing: border-box;
+      height: 100%;
+      padding: 0;
+      background: var(--bg) !important;
+      letter-spacing: 0;
+    }
+
+    .reveal h1,
+    .reveal h2,
+    .reveal h3,
+    .reveal p {
+      letter-spacing: 0;
+      margin: 0;
+      text-transform: none;
+    }
+
+    .reveal h1 {
+      font-size: 2.55em;
+      font-weight: 800;
+      line-height: 1.05;
+      max-width: 760px;
+    }
+
+    .reveal h2 {
+      font-size: 1.62em;
+      font-weight: 800;
+      line-height: 1.12;
+    }
+
+    .reveal h3 {
+      font-size: 0.9em;
+      font-weight: 800;
+      line-height: 1.18;
+    }
+
+    .reveal p {
+      color: var(--muted);
+      font-size: 0.82em;
+      line-height: 1.46;
+    }
+
+    .reveal strong {
+      color: var(--black);
+      font-weight: 800;
+    }
+
+    .reveal code {
+      background: rgba(255, 255, 255, 0.62);
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      color: var(--black);
+      font-size: 0.88em;
+      padding: 0.08em 0.28em;
+    }
+
+    .slide {
+      display: flex !important;
+      flex-direction: column;
+      gap: 18px;
+      padding: 44px 58px !important;
+    }
+
+    .slide-title {
+      display: grid !important;
+      grid-template-columns: minmax(0, 1.1fr) 440px;
+      align-items: center;
+      gap: 46px;
+      padding: 54px 64px !important;
+    }
+
+    .slide-closing {
+      display: grid !important;
+      place-items: center;
+      padding: 58px !important;
+      text-align: center;
+    }
+
+    .header {
+      align-items: flex-end;
+      border-bottom: 3px solid var(--black);
+      display: flex;
+      gap: 18px;
+      justify-content: space-between;
+      padding-bottom: 12px;
+    }
+
+    .kicker {
+      color: var(--blue);
+      font-size: 0.8em;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.95em;
+      line-height: 1.45;
+      max-width: 720px;
+      margin-top: 18px;
+    }
+
+    .authors {
+      color: var(--black);
+      font-size: 0.76em;
+      font-weight: 800;
+      margin-top: 28px;
+    }
+
+    .chips,
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip,
+    .tag {
+      align-items: center;
+      background: var(--white);
+      border: 2px solid var(--black);
+      border-radius: 999px;
+      color: var(--black);
+      display: inline-flex;
+      font-size: 0.68em;
+      font-weight: 800;
+      min-height: 30px;
+      padding: 4px 12px;
+      white-space: nowrap;
+    }
+
+    .chip.red,
+    .tag.red {
+      border-color: var(--red);
+    }
+
+    .chip.amber,
+    .tag.amber {
+      border-color: var(--amber);
+    }
+
+    .chip.green,
+    .tag.green {
+      border-color: var(--green);
+    }
+
+    .chip.blue,
+    .tag.blue {
+      border-color: var(--blue);
+    }
+
+    .title-pitch {
+      width: 100%;
+    }
+
+    .pitch-line,
+    .pitch-arc {
+      fill: none;
+      stroke: var(--black);
+      stroke-width: 1.8;
+      vector-effect: non-scaling-stroke;
+    }
+
+    .pitch-mark {
+      fill: var(--black);
+    }
+
+    .pitch-player {
+      stroke: var(--black);
+      stroke-width: 0.78;
+      vector-effect: non-scaling-stroke;
+    }
+
+    .pitch-player.team-a {
+      fill: var(--blue);
+    }
+
+    .pitch-player.team-b {
+      fill: var(--red);
+    }
+
+    .content-grid {
+      display: grid;
+      flex: 1;
+      gap: 16px;
+      min-height: 0;
+    }
+
+    .two-col {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .left-wide {
+      grid-template-columns: 1.25fr 0.95fr;
+    }
+
+    .right-wide {
+      grid-template-columns: 0.95fr 1.25fr;
+    }
+
+    .three-col {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .four-col {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .stack {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      min-height: 0;
+    }
+
+    .card,
+    .metric,
+    .step,
+    .note,
+    .quote {
+      background: var(--white);
+      border: 2px solid var(--black);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      box-sizing: border-box;
+    }
+
+    .card {
+      padding: 18px 19px;
+    }
+
+    .card.blue {
+      border-top: 8px solid var(--blue);
+    }
+
+    .card.red {
+      border-top: 8px solid var(--red);
+    }
+
+    .card.amber {
+      border-top: 8px solid var(--amber);
+    }
+
+    .card.green {
+      border-top: 8px solid var(--green);
+    }
+
+    .card h3 {
+      margin-bottom: 8px;
+    }
+
+    .card p + p {
+      margin-top: 8px;
+    }
+
+    .card ul {
+      list-style: none;
+      margin: 10px 0 0;
+      padding: 0;
+    }
+
+    .card li {
+      color: var(--muted);
+      font-size: 0.78em;
+      line-height: 1.42;
+      margin-bottom: 8px;
+      padding-left: 18px;
+      position: relative;
+    }
+
+    .card li::before {
+      background: var(--blue);
+      border-radius: 50%;
+      content: "";
+      height: 7px;
+      left: 0;
+      position: absolute;
+      top: 0.48em;
+      width: 7px;
+    }
+
+    .card.red li::before {
+      background: var(--red);
+    }
+
+    .card.amber li::before {
+      background: var(--amber);
+    }
+
+    .card.green li::before {
+      background: var(--green);
+    }
+
+    .metrics {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .metrics.three {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .metric {
+      min-height: 98px;
+      padding: 14px 16px;
+    }
+
+    .metric .num {
+      color: var(--blue);
+      font-size: 1.86em;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .metric:nth-child(2) .num {
+      color: var(--red);
+    }
+
+    .metric:nth-child(3) .num {
+      color: var(--green);
+    }
+
+    .metric:nth-child(4) .num {
+      color: var(--amber);
+    }
+
+    .metric .label {
+      color: var(--muted);
+      font-size: 0.66em;
+      font-weight: 700;
+      line-height: 1.25;
+      margin-top: 8px;
+    }
+
+    .notebook-flow {
+      display: grid;
+      flex: 1;
+      gap: 14px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      min-height: 0;
+    }
+
+    .step {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      padding: 18px;
+    }
+
+    .step .idx {
+      align-items: center;
+      background: var(--black);
+      border-radius: 999px;
+      color: var(--white);
+      display: flex;
+      font-size: 0.78em;
+      font-weight: 800;
+      height: 34px;
+      justify-content: center;
+      margin-bottom: 14px;
+      width: 34px;
+    }
+
+    .step:nth-child(1) .idx {
+      background: var(--blue);
+    }
+
+    .step:nth-child(2) .idx {
+      background: var(--red);
+    }
+
+    .step:nth-child(3) .idx {
+      background: var(--green);
+    }
+
+    .step:nth-child(4) .idx {
+      background: var(--amber);
+      color: var(--black);
+    }
+
+    .step h3 {
+      margin-bottom: 8px;
+    }
+
+    .step p {
+      font-size: 0.76em;
+    }
+
+    .step .out {
+      border-top: 1px solid var(--line);
+      color: var(--black);
+      font-size: 0.66em;
+      font-weight: 800;
+      margin-top: auto;
+      padding-top: 12px;
+    }
+
+    .mini-flow {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+
+    .mini-step {
+      background: var(--white);
+      border: 2px solid var(--black);
+      border-radius: 8px;
+      min-height: 96px;
+      padding: 13px;
+    }
+
+    .mini-step h3 {
+      font-size: 0.78em;
+      margin-bottom: 6px;
+    }
+
+    .mini-step p {
+      font-size: 0.66em;
+      line-height: 1.35;
+    }
+
+    .mini-step:nth-child(1) {
+      border-top: 8px solid var(--blue);
+    }
+
+    .mini-step:nth-child(2) {
+      border-top: 8px solid var(--green);
+    }
+
+    .mini-step:nth-child(3) {
+      border-top: 8px solid var(--amber);
+    }
+
+    .mini-step:nth-child(4) {
+      border-top: 8px solid var(--red);
+    }
+
+    .mini-step:nth-child(5) {
+      border-top: 8px solid var(--blue);
+    }
+
+    .pipeline-grid {
+      display: grid;
+      flex: 1;
+      gap: 14px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-rows: repeat(2, minmax(0, 1fr));
+      min-height: 0;
+    }
+
+    .pipeline-step {
+      background: var(--white);
+      border: 2px solid var(--black);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 0;
+      padding: 20px;
+    }
+
+    .pipeline-step.blue {
+      border-top: 9px solid var(--blue);
+    }
+
+    .pipeline-step.red {
+      border-top: 9px solid var(--red);
+    }
+
+    .pipeline-step.amber {
+      border-top: 9px solid var(--amber);
+    }
+
+    .pipeline-step.green {
+      border-top: 9px solid var(--green);
+    }
+
+    .pipeline-step.manual {
+      border-style: dashed;
+      border-top-style: solid;
+    }
+
+    .pipeline-num {
+      align-items: center;
+      background: var(--black);
+      border-radius: 999px;
+      color: var(--white);
+      display: flex;
+      font-size: 0.78em;
+      font-weight: 800;
+      height: 34px;
+      justify-content: center;
+      margin-bottom: 12px;
+      width: 34px;
+    }
+
+    .pipeline-step.blue .pipeline-num {
+      background: var(--blue);
+    }
+
+    .pipeline-step.red .pipeline-num {
+      background: var(--red);
+    }
+
+    .pipeline-step.amber .pipeline-num {
+      background: var(--amber);
+      color: var(--black);
+    }
+
+    .pipeline-step.green .pipeline-num {
+      background: var(--green);
+    }
+
+    .pipeline-step h3 {
+      font-size: 0.94em;
+      margin-bottom: 8px;
+    }
+
+    .pipeline-step p {
+      font-size: 0.78em;
+    }
+
+    .scrape-flow {
+      align-items: stretch;
+      display: grid;
+      flex: 1;
+      gap: 10px;
+      grid-template-columns: 1fr 24px 1fr 24px 1fr 24px 1fr;
+      min-height: 0;
+    }
+
+    .scrape-step {
+      background: var(--white);
+      border: 2px solid var(--black);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 0;
+      padding: 18px;
+    }
+
+    .scrape-step:nth-child(1) {
+      border-top: 8px solid var(--blue);
+    }
+
+    .scrape-step:nth-child(3) {
+      border-top: 8px solid var(--red);
+    }
+
+    .scrape-step:nth-child(5) {
+      border-top: 8px solid var(--amber);
+    }
+
+    .scrape-step:nth-child(7) {
+      border-top: 8px solid var(--green);
+    }
+
+    .scrape-step h3 {
+      font-size: 0.84em;
+      margin-bottom: 8px;
+    }
+
+    .scrape-step p {
+      font-size: 0.74em;
+    }
+
+    .scrape-arrow {
+      align-items: center;
+      color: var(--black);
+      display: flex;
+      font-size: 1.25em;
+      font-weight: 800;
+      justify-content: center;
+    }
+
+    .process-flow {
+      align-items: stretch;
+      display: grid;
+      flex: 1;
+      gap: 9px;
+      grid-template-columns: 1fr 20px 1fr 20px 1fr 20px 1fr 20px 1fr;
+      min-height: 0;
+    }
+
+    .process-step {
+      background: var(--white);
+      border: 2px solid var(--black);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 0;
+      padding: 16px;
+    }
+
+    .process-step:nth-child(1) {
+      border-top: 8px solid var(--blue);
+    }
+
+    .process-step:nth-child(3) {
+      border-top: 8px solid var(--red);
+    }
+
+    .process-step:nth-child(5) {
+      border-top: 8px solid var(--amber);
+    }
+
+    .process-step:nth-child(7) {
+      border-top: 8px solid var(--green);
+    }
+
+    .process-step:nth-child(9) {
+      border-top: 8px solid var(--blue);
+    }
+
+    .process-step h3 {
+      font-size: 0.82em;
+      margin-bottom: 8px;
+    }
+
+    .process-step p {
+      font-size: 0.72em;
+    }
+
+    .process-arrow {
+      align-items: center;
+      color: var(--black);
+      display: flex;
+      font-size: 1.15em;
+      font-weight: 800;
+      justify-content: center;
+    }
+
+    .quote {
+      border-left: 9px solid var(--red);
+      box-shadow: none;
+      color: var(--black);
+      font-size: 0.76em;
+      font-style: italic;
+      line-height: 1.36;
+      padding: 12px 15px;
+    }
+
+    .plot-frame {
+      align-items: center;
+      background: var(--white);
+      border: 2px solid var(--black);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex: 1;
+      justify-content: center;
+      min-height: 0;
+      overflow: hidden;
+      padding: 14px;
+    }
+
+    .plot-frame img {
+      display: block;
+      max-height: 100%;
+      max-width: 100%;
+      object-fit: contain;
+    }
+
+    .plot-frame.flush {
+      padding: 8px;
+    }
+
+    .phase-band {
+      display: grid;
+      flex: 1;
+      gap: 18px;
+      grid-template-columns: 1fr 1fr;
+      min-height: 0;
+    }
+
+    .phase {
+      background: var(--white);
+      border: 2px solid var(--black);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      padding: 22px;
+    }
+
+    .phase.baseline {
+      border-top: 10px solid var(--red);
+    }
+
+    .phase.final {
+      border-top: 10px solid var(--green);
+    }
+
+    .phase .label {
+      color: var(--muted);
+      font-size: 0.72em;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .phase h3 {
+      font-size: 1.03em;
+      margin-bottom: 10px;
+    }
+
+    .phase ul {
+      list-style: none;
+      margin: 12px 0 0;
+      padding: 0;
+    }
+
+    .phase li {
+      color: var(--muted);
+      font-size: 0.78em;
+      line-height: 1.42;
+      margin-bottom: 8px;
+      padding-left: 18px;
+      position: relative;
+    }
+
+    .phase li::before {
+      background: var(--black);
+      border-radius: 50%;
+      content: "";
+      height: 7px;
+      left: 0;
+      position: absolute;
+      top: 0.48em;
+      width: 7px;
+    }
+
+    .phase.baseline li::before {
+      background: var(--red);
+    }
+
+    .phase.final li::before {
+      background: var(--green);
+    }
+
+    .phase .result {
+      border-top: 1px solid var(--line);
+      color: var(--black);
+      font-size: 0.72em;
+      font-weight: 800;
+      margin-top: auto;
+      padding-top: 12px;
+    }
+
+    .tag-grid {
+      align-content: start;
+      display: flex;
+      flex: 1;
+      flex-wrap: wrap;
+      gap: 10px;
+      min-height: 0;
+    }
+
+    .closing-grid {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      margin-top: 26px;
+      width: 100%;
+    }
+
+    .reveal .progress {
+      color: var(--red);
+    }
+
+    .reveal .slide-number {
+      background: transparent;
+      color: var(--black);
+      font-family: "Inter", Arial, sans-serif;
+      font-size: 11px;
+      font-weight: 800;
+    }
+  </style>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+<section class="slide-title">
+  <div>
+    <div class="kicker">Projeto de NLP em documentos esportivos</div>
+    <h1>Classificação Semântica de Motivos de Cartão em Súmulas CBF</h1>
+    <p class="authors">Gabriel Carbinatto · Arthur Martins</p>
+  </div>
+
+  <div class="title-pitch">
+    <svg viewBox="-2 -2 109 72" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Campo de futebol com dois times">
+      <rect class="pitch-line" x="0" y="0" width="105" height="68"/>
+      <line class="pitch-line" x1="52.5" y1="0" x2="52.5" y2="68"/>
+      <circle class="pitch-arc" cx="52.5" cy="34" r="9.15"/>
+      <circle class="pitch-mark" cx="52.5" cy="34" r="0.75"/>
+      <rect class="pitch-line" x="0" y="13.84" width="16.5" height="40.32"/>
+      <rect class="pitch-line" x="88.5" y="13.84" width="16.5" height="40.32"/>
+      <rect class="pitch-line" x="0" y="24.84" width="5.5" height="18.32"/>
+      <rect class="pitch-line" x="99.5" y="24.84" width="5.5" height="18.32"/>
+      <circle class="pitch-mark" cx="11" cy="34" r="0.75"/>
+      <circle class="pitch-mark" cx="94" cy="34" r="0.75"/>
+      <path class="pitch-arc" d="M16.47 26.68 A9.15 9.15 0 0 1 16.47 41.32"/>
+      <path class="pitch-arc" d="M88.53 41.32 A9.15 9.15 0 0 1 88.53 26.68"/>
+
+      <circle class="pitch-player team-a" cx="7.5"  cy="34"   r="1.85"/>
+      <circle class="pitch-player team-a" cx="18.5" cy="11.5" r="1.85"/>
+      <circle class="pitch-player team-a" cx="22"   cy="24"   r="1.85"/>
+      <circle class="pitch-player team-a" cx="24.5" cy="43.5" r="1.85"/>
+      <circle class="pitch-player team-a" cx="19.5" cy="57.5" r="1.85"/>
+      <circle class="pitch-player team-a" cx="37.5" cy="15"   r="1.85"/>
+      <circle class="pitch-player team-a" cx="41"   cy="31.5" r="1.85"/>
+      <circle class="pitch-player team-a" cx="46"   cy="46.5" r="1.85"/>
+      <circle class="pitch-player team-a" cx="39"   cy="55"   r="1.85"/>
+      <circle class="pitch-player team-a" cx="61.5" cy="26.5" r="1.85"/>
+      <circle class="pitch-player team-a" cx="67"   cy="44"   r="1.85"/>
+
+      <circle class="pitch-player team-b" cx="97"   cy="34"   r="1.85"/>
+      <circle class="pitch-player team-b" cx="85.5" cy="56"   r="1.85"/>
+      <circle class="pitch-player team-b" cx="81.5" cy="44.5" r="1.85"/>
+      <circle class="pitch-player team-b" cx="79"   cy="24.5" r="1.85"/>
+      <circle class="pitch-player team-b" cx="84"   cy="10.5" r="1.85"/>
+      <circle class="pitch-player team-b" cx="66"   cy="54"   r="1.85"/>
+      <circle class="pitch-player team-b" cx="62.5" cy="39"   r="1.85"/>
+      <circle class="pitch-player team-b" cx="58.5" cy="22"   r="1.85"/>
+      <circle class="pitch-player team-b" cx="64"   cy="13.5" r="1.85"/>
+      <circle class="pitch-player team-b" cx="44"   cy="42.5" r="1.85"/>
+      <circle class="pitch-player team-b" cx="38.5" cy="28"   r="1.85"/>
+    </svg>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="header">
+    <div>
+      <div class="kicker">Cronologia do projeto</div>
+      <h2>Fluxo dos notebooks</h2>
+    </div>
+  </div>
+  <div class="notebook-flow">
+    <div class="step">
+      <div class="idx">0</div>
+      <h3>Coleta das súmulas</h3>
+      <p>Descoberta dos IDs de competição, coleta de metadados e download dos PDFs da CBF.</p>
+    </div>
+    <div class="step">
+      <div class="idx">1</div>
+      <h3>Limpeza e parsing</h3>
+      <p>Extração com pdfplumber, regex para cartões e motivos de acréscimos, normalização textual.</p>
+    </div>
+    <div class="step">
+      <div class="idx">2</div>
+      <h3>Embeddings e BERTopic</h3>
+      <p>EDA, grid search, duas passagens de BERTopic, fine-tuning, rotulagem e análise de VAR.</p>
+    </div>
+    <div class="step">
+      <div class="idx">3</div>
+      <h3>Baseline LLM</h3>
+      <p>Classificação zero-shot via Ollama e comparação contra o método final por coesão semântica.</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="header">
+    <div>
+      <div class="kicker">Definição do problema</div>
+      <h2>Transformar texto livre em categorias comparáveis</h2>
+    </div>
+  </div>
+  <div class="content-grid left-wide">
+    <div class="stack">
+      <div class="card blue">
+        <h3>Por que o problema é difícil?</h3>
+        <p>A súmula registra a justificativa do cartão em linguagem natural. A mesma infração pode aparecer com redações diferentes, graus de detalhe diferentes e termos próprios de cada árbitro.</p>
+      </div>
+      <div class="card green">
+        <h3>Objetivo do projeto</h3>
+        <p>Classificar automaticamente os motivos de cartão em uma taxonomia de 18 grupos e usar esses rótulos para analisar padrões por temporada, time e árbitro.</p>
+      </div>
+      <div class="card amber">
+        <h3>Além dos cartões</h3>
+        <p>Nos motivos de atraso e acréscimos, detectar menções ao VAR para acompanhar sua presença nas súmulas ao longo do tempo.</p>
+      </div>
+    </div>
+    <div class="stack">
+      <div class="quote">"Por reclamar ostensivamente com palavras e gestos."</div>
+      <div class="quote">"Por protestar contra decisão da arbitragem de forma acintosa."</div>
+      <div class="quote">"Por questionar reiteradamente as decisões da arbitragem."</div>
+      <div class="card red">
+        <h3>Mesmo sentido, várias superfícies</h3>
+        <p>Esses exemplos apontam para o mesmo grupo: <strong>Protesto contra a arbitragem</strong>. A solução precisa capturar significado, não apenas palavras isoladas.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="header">
+    <div>
+      <div class="kicker">Notebook 0</div>
+      <h2>Base e coleta das súmulas CBF</h2>
+    </div>
+  </div>
+  <div class="metrics three">
+    <div class="metric"><div class="num">5.681</div><div class="label">súmulas indexadas no conjunto processado</div></div>
+    <div class="metric"><div class="num">3</div><div class="label">competições: Série A, Série B e Copa do Brasil</div></div>
+    <div class="metric"><div class="num">2020-26</div><div class="label">janela temporal, com 2026 ainda parcial</div></div>
+  </div>
+  <div class="scrape-flow">
+    <div class="scrape-step">
+      <h3>1. IDs das competições</h3>
+      <p>Série A parte de IDs conhecidos; Série B e Copa do Brasil são descobertas por busca no site da CBF.</p>
+    </div>
+    <div class="scrape-arrow">&rarr;</div>
+    <div class="scrape-step">
+      <h3>2. Rodadas e fases</h3>
+      <p>Para cada competição e ano, o notebook percorre rodadas ou fases eliminatórias e lista os jogos disponíveis.</p>
+    </div>
+    <div class="scrape-arrow">&rarr;</div>
+    <div class="scrape-step">
+      <h3>3. Metadados</h3>
+      <p>Data, rodada, equipes, identificador do jogo e links dos documentos são normalizados em uma tabela de controle.</p>
+    </div>
+    <div class="scrape-arrow">&rarr;</div>
+    <div class="scrape-step">
+      <h3>4. Download dos PDFs</h3>
+      <p>Somente documentos de súmula são baixados, com retry, cache local e caminho persistido para auditoria posterior.</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="header">
+    <div>
+      <div class="kicker">Notebook 1</div>
+      <h2>Limpeza e extração dos campos úteis</h2>
+    </div>
+  </div>
+  <div class="metrics three">
+    <div class="metric"><div class="num">25.838</div><div class="label">cartões processados</div></div>
+    <div class="metric"><div class="num">6.945</div><div class="label">textos únicos usados na modelagem semântica</div></div>
+    <div class="metric"><div class="num">2.035</div><div class="label">partidas com sinal textual de VAR</div></div>
+  </div>
+  <div class="process-flow">
+    <div class="process-step">
+      <h3>1. PDF para texto</h3>
+      <p>pdfplumber concatena as páginas da súmula em uma string por partida.</p>
+    </div>
+    <div class="process-arrow">&rarr;</div>
+    <div class="process-step">
+      <h3>2. Times e árbitro</h3>
+      <p>Matching normalizado resolve variações de escrita entre índice e PDF.</p>
+    </div>
+    <div class="process-arrow">&rarr;</div>
+    <div class="process-step">
+      <h3>3. Cartões</h3>
+      <p>Regex separa minuto, tipo, equipe e justificativa escrita pelo árbitro.</p>
+    </div>
+    <div class="process-arrow">&rarr;</div>
+    <div class="process-step">
+      <h3>4. Dupla advertência</h3>
+      <p>Texto processual é limpo e o evento entra como amarelo para a análise disciplinar.</p>
+    </div>
+    <div class="process-arrow">&rarr;</div>
+    <div class="process-step">
+      <h3>5. Acréscimos</h3>
+      <p>Campo de atraso/acréscimos vira base para detectar menções ao VAR.</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="header">
+    <div>
+      <div class="kicker">Notebook 1 e EDA</div>
+      <h2>Cartões extraídos por ano e tipo</h2>
+    </div>
+  </div>
+  <div class="plot-frame flush">
+    <img src="viz/cards_by_year_type.png" alt="Distribuição de cartões por ano e tipo">
+  </div>
+</section>
+
+<section class="slide">
+  <div class="header">
+    <div>
+      <div class="kicker">EDA textual</div>
+      <h2>Justificativas mais frequentes</h2>
+    </div>
+  </div>
+  <div class="plot-frame flush">
+    <img src="viz/top_card_reason_texts.png" alt="Textos de justificativa de cartão mais frequentes">
+  </div>
+</section>
+
+<section class="slide">
+  <div class="header">
+    <div>
+      <div class="kicker">Fase preliminar para fase final</div>
+      <h2>Baseline LLM e proposta de melhoria</h2>
+    </div>
+  </div>
+  <div class="phase-band">
+    <div class="phase baseline">
+      <div class="label">Baseline - Notebook 3</div>
+      <h3>LLM local via Ollama</h3>
+      <p>A LLM recebe a justificativa e apenas os nomes dos 18 grupos. Não há exemplos, regras manuais, fine-tuning ou embeddings especializados.</p>
+      <ul>
+        <li>Modelo usado: <code>llama3.2:3b</code></li>
+        <li>Temperatura 0 e resposta curta</li>
+        <li>Cache em CSV para retomar a classificação</li>
+      </ul>
+    </div>
+    <div class="phase final">
+      <div class="label">Melhoria - Notebook 2</div>
+      <h3>BERTopic com fine-tuning</h3>
+      <p>Embeddings do domínio são refinados a partir dos próprios clusters iniciais. Depois, a segunda passagem produz grupos mais coesos e menos outliers.</p>
+      <ul>
+        <li><code>multilingual-e5-large</code> com prefixos E5</li>
+        <li>UMAP + HDBSCAN avaliados por DBCV</li>
+        <li>Rotulagem manual e auditoria de representatividade</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="header">
+    <div>
+      <div class="kicker">Notebook 2</div>
+      <h2>Pipeline de motivos de cartão</h2>
+    </div>
+  </div>
+  <div class="pipeline-grid">
+    <div class="pipeline-step blue">
+      <div class="pipeline-num">1</div>
+      <h3>Embeddings base</h3>
+      <p>Gerar vetores para as justificativas únicas com o modelo E5 multilingual.</p>
+    </div>
+    <div class="pipeline-step red">
+      <div class="pipeline-num">2</div>
+      <h3>Grid search</h3>
+      <p><code>n_neighbors</code> e <code>min_topic_size</code> selecionados por DBCV no espaço UMAP.</p>
+    </div>
+    <div class="pipeline-step amber">
+      <div class="pipeline-num">3</div>
+      <h3>BERTopic P1</h3>
+      <p>Clusters exploratórios geram pares positivos para treino contrastivo.</p>
+    </div>
+    <div class="pipeline-step green">
+      <div class="pipeline-num">4</div>
+      <h3>Fine-tuning</h3>
+      <p>MultipleNegativesRankingLoss, 1 epoch, pares sintéticos por cluster.</p>
+    </div>
+    <div class="pipeline-step blue">
+      <div class="pipeline-num">5</div>
+      <h3>BERTopic P2</h3>
+      <p>Nova clusterização com embeddings fine-tunados, menos outliers e melhor separação.</p>
+    </div>
+    <div class="pipeline-step red manual">
+      <div class="pipeline-num">6</div>
+      <h3>Rotulagem manual</h3>
+      <p>Taxonomia de 18 grupos, auditoria dos outliers e score de representatividade.</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="header">
+    <div>
+      <div class="kicker">Seleção de hiperparâmetros</div>
+      <h2>Grid search UMAP + HDBSCAN</h2>
+    </div>
+  </div>
+  <div class="plot-frame flush">
+    <img src="viz/umap_param_grid_search_base.png" alt="Grid search de parâmetros UMAP e HDBSCAN">
+  </div>
+</section>
+
+<section class="slide">
+  <div class="header">
+    <div>
+      <div class="kicker">Ablação</div>
+      <h2>Impacto do fine-tuning</h2>
+    </div>
+  </div>
+  <div class="plot-frame flush">
+    <img src="viz/ablation_dbcv.png" alt="Ablação comparando modelo base e modelo fine-tunado">
+  </div>
+</section>
+
+<section class="slide">
+  <div class="header">
+    <div>
+      <div class="kicker">Rotulagem final</div>
+      <h2>Taxonomia de 18 grupos semânticos</h2>
+    </div>
+  </div>
+  <div class="tag-grid">
+    <span class="tag blue">Ação temerária</span>
+    <span class="tag red">Protesto contra a arbitragem</span>
+    <span class="tag green">Falta tática em ataque promissor</span>
+    <span class="tag amber">Retardar reinício do jogo</span>
+    <span class="tag blue">Agarrar ou segurar adversário</span>
+    <span class="tag green">Confronto físico com adversário</span>
+    <span class="tag red">Conduta antidesportiva</span>
+    <span class="tag amber">Comemoração irregular</span>
+    <span class="tag blue">Gesto ou linguagem ofensiva</span>
+    <span class="tag red">Conduta violenta</span>
+    <span class="tag green">Jogo brusco grave</span>
+    <span class="tag amber">Toque de mão na bola</span>
+    <span class="tag blue">Impedir clara oportunidade de gol</span>
+    <span class="tag green">Simulação</span>
+    <span class="tag red">Insubordinação da comissão técnica</span>
+    <span class="tag amber">Não respeitar distância regulamentar</span>
+    <span class="tag blue">Infringir persistentemente as regras</span>
+    <span class="tag red">Entrar ou sair do campo sem autorização</span>
+  </div>
+  <div class="content-grid three-col" style="flex:0 0 auto;">
+    <div class="card blue">
+      <h3>Clusters mapeados</h3>
+      <p>79 clusters finais foram revisados e ligados aos rótulos semânticos.</p>
+    </div>
+    <div class="card green">
+      <h3>Outliers auditados</h3>
+      <p>504 textos únicos fora dos clusters densos receberam tratamento manual.</p>
+    </div>
+    <div class="card amber">
+      <h3>Âncoras lexicais</h3>
+      <p>Regras pontuais corrigem casos decisivos como DOGSO, simulação, mão e força excessiva.</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="header">
+    <div>
+      <div class="kicker">Resultado geral</div>
+      <h2>Distribuição dos grupos de cartão</h2>
+    </div>
+  </div>
+  <div class="plot-frame flush">
+    <img src="viz/card_reason_groups_counts.png" alt="Contagem de cartões por grupo semântico">
+  </div>
+</section>
+
+<section class="slide">
+  <div class="header">
+    <div>
+      <div class="kicker">Auditoria do método</div>
+      <h2>Representatividade dos grupos</h2>
+    </div>
+  </div>
+  <div class="plot-frame flush">
+    <img src="viz/card_reason_representativeness.png" alt="Representatividade dos grupos por similaridade cosseno">
+  </div>
+</section>
+
+<section class="slide">
+  <div class="header">
+    <div>
+      <div class="kicker">Análise temporal</div>
+      <h2>Evolução dos grupos por temporada</h2>
+    </div>
+  </div>
+  <div class="plot-frame flush">
+    <img src="viz/card_reason_groups_proportions_by_year.png" alt="Proporção de grupos de cartão por ano">
+  </div>
+</section>
+
+<section class="slide">
+  <div class="header">
+    <div>
+      <div class="kicker">Análise por equipe</div>
+      <h2>Perfil disciplinar por time</h2>
+    </div>
+  </div>
+  <div class="plot-frame flush">
+    <img src="viz/card_reason_groups_by_team.png" alt="Distribuição de grupos de cartão por time">
+  </div>
+</section>
+
+<section class="slide">
+  <div class="header">
+    <div>
+      <div class="kicker">Análise por arbitragem</div>
+      <h2>Padrões de marcação por árbitro</h2>
+    </div>
+  </div>
+  <div class="plot-frame flush">
+    <img src="viz/card_reason_groups_by_referee.png" alt="Distribuição de grupos de cartão por árbitro">
+  </div>
+</section>
+
+<section class="slide">
+  <div class="header">
+    <div>
+      <div class="kicker">Acréscimos e atrasos</div>
+      <h2>Menções ao VAR por temporada</h2>
+    </div>
+  </div>
+  <div class="content-grid right-wide">
+    <div class="stack">
+      <div class="card blue">
+        <h3>Detecção lexical</h3>
+        <p>Nos motivos de acréscimos, termos como <strong>VAR</strong> e <strong>checagem</strong> indicam menção ao protocolo de vídeo.</p>
+      </div>
+      <div class="card green">
+        <h3>Resultado agregado</h3>
+        <p>Foram identificados sinais de VAR em <strong>2.035 de 5.681 partidas</strong>, cerca de <strong>35,8%</strong> da base.</p>
+      </div>
+      <div class="card amber">
+        <h3>Leitura</h3>
+        <p>O pico aparece em 2021. A queda de 2026 deve ser lida com cautela porque a temporada está incompleta.</p>
+      </div>
+    </div>
+    <div class="plot-frame flush">
+      <img src="viz/var_mentions_by_year.png" alt="Menções ao VAR por ano">
+    </div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="header">
+    <div>
+      <div class="kicker">Acréscimos e atrasos</div>
+      <h2>VAR por time e por árbitro</h2>
+    </div>
+  </div>
+  <div class="content-grid two-col">
+    <div class="plot-frame flush">
+      <img src="viz/var_mentions_by_team.png" alt="Menções ao VAR por time">
+    </div>
+    <div class="plot-frame flush">
+      <img src="viz/var_mentions_by_referee.png" alt="Menções ao VAR por árbitro">
+    </div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="header">
+    <div>
+      <div class="kicker">Baseline LLM</div>
+      <h2>Score médio por grupo: final versus Ollama</h2>
+    </div>
+  </div>
+  <div class="plot-frame flush">
+    <img src="viz/baseline_llm_score_mean_by_group.png" alt="Comparação de score médio por grupo entre método final e baseline LLM">
+  </div>
+</section>
+
+<section class="slide-closing">
+  <div>
+    <div class="kicker">Fechamento</div>
+    <h1>Conclusões e próximos passos</h1>
+    <div class="closing-grid">
+      <div class="card green">
+        <h3>Funcionou</h3>
+        <p>O pipeline BERTopic em duas passagens melhorou a separação dos clusters, reduziu outliers e gerou grupos interpretáveis.</p>
+      </div>
+      <div class="card amber">
+        <h3>Limitações</h3>
+        <p>Alguns grupos são semanticamente próximos ou amplos, especialmente conduta antidesportiva, confronto físico e ação temerária.</p>
+      </div>
+      <div class="card blue">
+        <h3>Extensões</h3>
+        <p>Treinar um classificador supervisionado com os rótulos finais e aprofundar análises longitudinais por árbitro, equipe e competição.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@4.6.0/dist/reveal.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true,
+    slideNumber: "c/t",
+    progress: true,
+    transition: "fade",
+    transitionSpeed: "fast",
+    width: 1280,
+    height: 720,
+    margin: 0,
+    minScale: 0.2,
+    maxScale: 2.0,
+    controls: false,
+    center: false,
+    pdfMaxPagesPerSlide: 1,
+    pdfSeparateFragments: false
+  });
+</script>
+</body>
+</html>
