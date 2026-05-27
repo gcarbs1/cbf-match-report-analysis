@@ -962,7 +962,7 @@
   <div class="scrape-flow">
     <div class="scrape-step">
       <h3>1. IDs das competições</h3>
-      <p>Série A parte de IDs conhecidos; Série B e Copa do Brasil são descobertas por busca no site da CBF.</p>
+      <p>Série A parte de IDs conhecidos. Série B e Copa do Brasil são descobertas por busca no site da CBF.</p>
     </div>
     <div class="scrape-arrow">&rarr;</div>
     <div class="scrape-step">
@@ -1018,7 +1018,7 @@
     <div class="pipeline-step red">
       <div class="pipeline-num">5</div>
       <h3>Dupla advertência</h3>
-      <p>Texto processual da expulsão é limpo; o evento entra como amarelo para análise disciplinar.</p>
+      <p>Texto processual da expulsão é limpo. O evento entra como amarelo para análise disciplinar.</p>
     </div>
     <div class="pipeline-step amber">
       <div class="pipeline-num">6</div>
@@ -1055,30 +1055,72 @@
 <section class="slide">
   <div class="header">
     <div>
-      <div class="kicker">Fase preliminar para fase final</div>
-      <h2>Baseline LLM e proposta de melhoria</h2>
+      <div class="kicker">Proposta de classificação</div>
+      <h2>Taxonomia de 18 grupos semânticos</h2>
     </div>
   </div>
-  <div class="phase-band">
-    <div class="phase baseline">
-      <div class="label">Baseline - Notebook 3</div>
-      <h3>LLM local via Ollama</h3>
-      <p>A LLM recebe a justificativa e apenas os nomes dos 18 grupos. Não há exemplos, regras manuais, fine-tuning ou embeddings especializados.</p>
-      <ul>
-        <li>Modelo usado: <code>llama3.2:3b</code></li>
-        <li>Temperatura 0 e resposta curta</li>
-        <li>Cache em CSV para retomar a classificação</li>
-      </ul>
+  <div class="content-grid left-wide">
+    <div class="tag-grid">
+      <span class="tag blue">Ação temerária</span>
+      <span class="tag red">Protesto contra a arbitragem</span>
+      <span class="tag green">Falta tática em ataque promissor</span>
+      <span class="tag amber">Retardar reinício do jogo</span>
+      <span class="tag blue">Agarrar ou segurar adversário</span>
+      <span class="tag red">Conduta antidesportiva</span>
+      <span class="tag green">Confronto físico com adversário</span>
+      <span class="tag amber">Comemoração irregular</span>
+      <span class="tag blue">Gesto ou linguagem ofensiva</span>
+      <span class="tag red">Conduta violenta</span>
+      <span class="tag green">Jogo brusco grave</span>
+      <span class="tag amber">Toque de mão na bola</span>
+      <span class="tag blue">Impedir clara oportunidade de gol</span>
+      <span class="tag red">Insubordinação da comissão técnica</span>
+      <span class="tag green">Simulação</span>
+      <span class="tag amber">Não respeitar distância regulamentar</span>
+      <span class="tag blue">Infringir persistentemente as regras</span>
+      <span class="tag red">Entrar ou sair do campo sem autorização</span>
     </div>
-    <div class="phase final">
-      <div class="label">Melhoria - Notebook 2</div>
-      <h3>BERTopic com fine-tuning</h3>
-      <p>Embeddings do domínio são refinados a partir dos próprios clusters iniciais. Depois, a segunda passagem produz grupos mais coesos e menos outliers.</p>
-      <ul>
-        <li><code>multilingual-e5-large</code> com prefixos E5</li>
-        <li>UMAP + HDBSCAN avaliados por DBCV</li>
-        <li>Rotulagem manual e auditoria de representatividade</li>
-      </ul>
+    <div class="stack">
+      <div class="card blue">
+        <h3>Infrações das Leis do Jogo</h3>
+        <p>Cada grupo corresponde a uma categoria disciplinar das Leis do Jogo da FIFA. As mesmas categorias para as quais árbitros brasileiros são treinados a lavrar a súmula.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="header">
+    <div>
+      <div class="kicker">Notebook 3</div>
+      <h2>Baseline: LLM zero-shot via Ollama</h2>
+    </div>
+  </div>
+  <div class="content-grid two-col">
+    <div class="stack">
+      <div class="card red">
+        <h3>O que é a baseline</h3>
+        <p>A LLM recebe apenas o texto da justificativa e os nomes dos 18 grupos. Sem exemplos, sem regras manuais, sem fine-tuning. Temperatura 0 para resposta determinística.</p>
+      </div>
+      <div class="card blue">
+        <h3>Configuração</h3>
+        <ul>
+          <li>Modelo: <code>llama3.2:3b</code> via Ollama local</li>
+          <li>Temperatura 0 e máximo de 30 tokens na resposta</li>
+          <li>Resultado cacheado em CSV para retomar sem reclassificar</li>
+          <li>184 de 6.945 textos retornaram resposta não parseável</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card amber" style="display: flex; flex-direction: column;">
+      <h3>Prompt enviado à LLM</h3>
+      <div style="margin-top: 12px; font-family: 'Courier New', monospace; font-size: 0.86em; line-height: 1.65; flex: 1;">
+        <p style="color: var(--black);">Você é especialista em regras do futebol.</p>
+        <p style="color: var(--black); margin-top: 6px;">Classifique a justificativa de cartão abaixo em EXATAMENTE UM dos grupos listados. Responda apenas com o nome exato do grupo, sem explicações.</p>
+        <p style="color: var(--black); margin-top: 10px;"><strong>Grupos:</strong><br>Ação temerária<br>Protesto contra a arbitragem<br>Falta tática em ataque promissor<br><span style="color: var(--muted);">... 15 grupos restantes ...</span></p>
+        <p style="color: var(--black); margin-top: 10px;"><strong>Justificativa:</strong> Por calçar seu adversário de maneira temerária na disputa de bola.</p>
+        <p style="color: var(--black); margin-top: 6px;"><strong>Grupo:</strong> <span style="color: var(--blue);">Ação temerária</span></p>
+      </div>
     </div>
   </div>
 </section>
@@ -1087,7 +1129,7 @@
   <div class="header">
     <div>
       <div class="kicker">Notebook 2</div>
-      <h2>Pipeline de motivos de cartão</h2>
+      <h2>Melhoria: BERTopic com fine-tuning</h2>
     </div>
   </div>
   <div class="pipeline-grid">
@@ -1119,7 +1161,7 @@
     <div class="pipeline-step amber">
       <div class="pipeline-num">6</div>
       <h3>Rotulagem manual</h3>
-      <p>Taxonomia de 18 grupos, auditoria dos outliers e score de representatividade.</p>
+      <p>79 clusters revisados e mapeados para 18 grupos. Outliers auditados por similaridade cosseno.</p>
     </div>
   </div>
 </section>
@@ -1148,54 +1190,12 @@
   </div>
 </section>
 
-<section class="slide">
-  <div class="header">
-    <div>
-      <div class="kicker">Rotulagem final</div>
-      <h2>Taxonomia de 18 grupos semânticos</h2>
-    </div>
-  </div>
-  <div class="tag-grid">
-    <span class="tag blue">Ação temerária</span>
-    <span class="tag red">Protesto contra a arbitragem</span>
-    <span class="tag green">Falta tática em ataque promissor</span>
-    <span class="tag amber">Retardar reinício do jogo</span>
-    <span class="tag blue">Agarrar ou segurar adversário</span>
-    <span class="tag red">Conduta antidesportiva</span>
-    <span class="tag green">Confronto físico com adversário</span>
-    <span class="tag amber">Comemoração irregular</span>
-    <span class="tag blue">Gesto ou linguagem ofensiva</span>
-    <span class="tag red">Conduta violenta</span>
-    <span class="tag green">Jogo brusco grave</span>
-    <span class="tag amber">Toque de mão na bola</span>
-    <span class="tag blue">Impedir clara oportunidade de gol</span>
-    <span class="tag red">Insubordinação da comissão técnica</span>
-    <span class="tag green">Simulação</span>
-    <span class="tag amber">Não respeitar distância regulamentar</span>
-    <span class="tag blue">Infringir persistentemente as regras</span>
-    <span class="tag red">Entrar ou sair do campo sem autorização</span>
-  </div>
-  <div class="content-grid three-col" style="flex: 0 0 auto;">
-    <div class="card blue">
-      <h3>Infrações das Leis do Jogo</h3>
-      <p>Cada grupo corresponde a um tipo de infração disciplinar previsto nas Leis do Jogo da FIFA — as mesmas categorias para as quais os árbitros brasileiros são treinados a lavrar a súmula.</p>
-    </div>
-    <div class="card green">
-      <h3>Granularidade analítica</h3>
-      <p>18 grupos permitem distinguir comportamentos com padrões distintos por time, árbitro e temporada. Menos grupos ocultariam contrastes relevantes; mais fragmentariam infrações com a mesma raiz.</p>
-    </div>
-    <div class="card amber">
-      <h3>Presença consistente nos dados</h3>
-      <p>Todos os 18 grupos aparecem com frequência regular nas três competições e no intervalo 2020–2026. Nenhum grupo foi criado para eventos raros — cada um reflete um padrão disciplinar recorrente.</p>
-    </div>
-  </div>
-</section>
 
 <section class="slide">
   <div class="header">
     <div>
-      <div class="kicker">Mapeamento e avaliação</div>
-      <h2>79 clusters → 18 grupos e score de representatividade</h2>
+      <div class="kicker">Mapeamento e score</div>
+      <h2>Como foi construído o score de representatividade</h2>
     </div>
   </div>
   <div class="content-grid two-col">
@@ -1212,7 +1212,7 @@
     <div class="stack">
       <div class="card green">
         <h3>Score de representatividade</h3>
-        <p>Para cada grupo calcula-se o centroide ponderado pelo número de eventos no espaço do modelo fine-tunado. O <strong>score_mean</strong> é a similaridade cosseno média de todos os textos do grupo ao seu centroide — quanto maior, mais coeso o grupo.</p>
+        <p>Para cada grupo calcula-se o centroide ponderado pelo número de eventos no espaço do modelo fine-tunado. O <strong>score_mean</strong> é a similaridade cosseno média de todos os textos do grupo ao seu centroide. Quanto maior, mais coeso o grupo.</p>
       </div>
       <div class="card amber">
         <h3>Interpretação do score</h3>
@@ -1225,24 +1225,36 @@
 <section class="slide">
   <div class="header">
     <div>
-      <div class="kicker">Resultado geral</div>
-      <h2>Distribuição dos grupos de cartão</h2>
-    </div>
-  </div>
-  <div class="plot-frame flush">
-    <img src="viz/card_reason_groups_counts.png" alt="Contagem de cartões por grupo semântico">
-  </div>
-</section>
-
-<section class="slide">
-  <div class="header">
-    <div>
       <div class="kicker">Auditoria do método</div>
       <h2>Representatividade dos grupos</h2>
     </div>
   </div>
   <div class="plot-frame flush">
     <img src="viz/card_reason_representativeness.png" alt="Representatividade dos grupos por similaridade cosseno">
+  </div>
+</section>
+
+<section class="slide">
+  <div class="header">
+    <div>
+      <div class="kicker">Comparação de métodos</div>
+      <h2>Coesão semântica por grupo: BERTopic + fine-tuning vs. LLM zero-shot</h2>
+    </div>
+  </div>
+  <div class="plot-frame flush">
+    <img src="viz/baseline_llm_score_mean_by_group.png" alt="Comparação de score médio por grupo entre método final e baseline LLM">
+  </div>
+</section>
+
+<section class="slide">
+  <div class="header">
+    <div>
+      <div class="kicker">Resultado geral</div>
+      <h2>Distribuição dos grupos de cartão</h2>
+    </div>
+  </div>
+  <div class="plot-frame flush">
+    <img src="viz/card_reason_groups_counts.png" alt="Contagem de cartões por grupo semântico">
   </div>
 </section>
 
@@ -1324,18 +1336,6 @@
     <div class="plot-frame flush">
       <img src="viz/var_mentions_by_referee.png" alt="Menções ao VAR por árbitro">
     </div>
-  </div>
-</section>
-
-<section class="slide">
-  <div class="header">
-    <div>
-      <div class="kicker">Baseline LLM</div>
-      <h2>Coesão semântica por grupo: BERTopic + fine-tuning vs. LLM zero-shot</h2>
-    </div>
-  </div>
-  <div class="plot-frame flush">
-    <img src="viz/baseline_llm_score_mean_by_group.png" alt="Comparação de score médio por grupo entre método final e baseline LLM">
   </div>
 </section>
 
