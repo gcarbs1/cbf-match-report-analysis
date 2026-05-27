@@ -114,7 +114,12 @@
       display: grid !important;
       place-items: center;
       padding: 58px !important;
+      text-align: center !important;
+    }
+
+    .slide-closing > div {
       text-align: center;
+      width: 100%;
     }
 
     .header {
@@ -883,7 +888,7 @@
       <h2>Fluxo dos notebooks</h2>
     </div>
   </div>
-  <div class="notebook-flow">
+  <div class="notebook-flow" style="grid-template-columns: repeat(2, minmax(0, 1fr));">
     <div class="step">
       <div class="idx">0</div>
       <h3>Coleta das súmulas</h3>
@@ -914,30 +919,31 @@
       <h2>Transformar texto livre em categorias comparáveis</h2>
     </div>
   </div>
-  <div class="content-grid left-wide">
+  <div class="content-grid two-col">
     <div class="stack">
       <div class="card blue">
         <h3>Por que o problema é difícil?</h3>
         <p>A súmula registra a justificativa do cartão em linguagem natural. A mesma infração pode aparecer com redações diferentes, graus de detalhe diferentes e termos próprios de cada árbitro.</p>
       </div>
-      <div class="card green">
-        <h3>Objetivo do projeto</h3>
-        <p>Classificar automaticamente os motivos de cartão em uma taxonomia de 18 grupos e usar esses rótulos para analisar padrões por temporada, time e árbitro.</p>
-      </div>
-      <div class="card amber">
-        <h3>Além dos cartões</h3>
-        <p>Nos motivos de atraso e acréscimos, detectar menções ao VAR para acompanhar sua presença nas súmulas ao longo do tempo.</p>
+      <div class="card red">
+        <h3>Mesma infração, redações distintas</h3>
+        <p>Os três exemplos ao lado apontam para o mesmo comportamento: <strong>Protesto contra a arbitragem</strong>. A solução precisa capturar significado, não apenas palavras isoladas.</p>
       </div>
     </div>
     <div class="stack">
+      <div class="card green">
+        <h3>Objetivo do projeto</h3>
+        <p>Classificar automaticamente os motivos de cartão e usar esses rótulos para analisar padrões disciplinares por temporada, time e árbitro.</p>
+      </div>
       <div class="quote">"Por reclamar ostensivamente com palavras e gestos."</div>
       <div class="quote">"Por protestar contra decisão da arbitragem de forma acintosa."</div>
       <div class="quote">"Por questionar reiteradamente as decisões da arbitragem."</div>
-      <div class="card red">
-        <h3>Mesmo sentido, várias superfícies</h3>
-        <p>Esses exemplos apontam para o mesmo grupo: <strong>Protesto contra a arbitragem</strong>. A solução precisa capturar significado, não apenas palavras isoladas.</p>
-      </div>
     </div>
+  </div>
+  <div class="card amber" style="flex: 0 0 auto;">
+    <div style="color: var(--amber); font-size: 0.68em; font-weight: 800; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.04em;">Estudo adicional</div>
+    <h3>Além dos cartões</h3>
+    <p>Nos motivos de atraso e acréscimos, detectar menções ao VAR para acompanhar sua presença nas súmulas ao longo do tempo.</p>
   </div>
 </section>
 
@@ -988,30 +994,36 @@
     <div class="metric"><div class="num">6.945</div><div class="label">textos únicos usados na modelagem semântica</div></div>
     <div class="metric"><div class="num">2.035</div><div class="label">partidas com sinal textual de VAR</div></div>
   </div>
-  <div class="process-flow">
-    <div class="process-step">
-      <h3>1. PDF para texto</h3>
-      <p>pdfplumber concatena as páginas da súmula em uma string por partida.</p>
+  <div class="pipeline-grid" style="grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(3, minmax(0, 1fr));">
+    <div class="pipeline-step blue">
+      <div class="pipeline-num">1</div>
+      <h3>PDF para texto</h3>
+      <p>pdfplumber concatena todas as páginas da súmula em uma string por partida.</p>
     </div>
-    <div class="process-arrow">&rarr;</div>
-    <div class="process-step">
-      <h3>2. Times e árbitro</h3>
-      <p>Matching normalizado resolve variações de escrita entre índice e PDF.</p>
+    <div class="pipeline-step blue">
+      <div class="pipeline-num">2</div>
+      <h3>Times e árbitro</h3>
+      <p>Matching normalizado resolve variações de escrita entre o índice e o PDF.</p>
     </div>
-    <div class="process-arrow">&rarr;</div>
-    <div class="process-step">
-      <h3>3. Cartões</h3>
-      <p>Regex separa minuto, tipo, equipe e justificativa escrita pelo árbitro.</p>
+    <div class="pipeline-step red">
+      <div class="pipeline-num">3</div>
+      <h3>Motivos de cartão</h3>
+      <p>Regex extrai minuto, tipo, equipe e justificativa de cada cartão amarelo e vermelho.</p>
     </div>
-    <div class="process-arrow">&rarr;</div>
-    <div class="process-step">
-      <h3>4. Dupla advertência</h3>
-      <p>Texto processual é limpo e o evento entra como amarelo para a análise disciplinar.</p>
+    <div class="pipeline-step amber">
+      <div class="pipeline-num">4</div>
+      <h3>Motivos de acréscimos</h3>
+      <p>Seção de atrasos e acréscimos extraída como campo textual livre por partida.</p>
     </div>
-    <div class="process-arrow">&rarr;</div>
-    <div class="process-step">
-      <h3>5. Acréscimos</h3>
-      <p>Campo de atraso/acréscimos vira base para detectar menções ao VAR.</p>
+    <div class="pipeline-step red">
+      <div class="pipeline-num">5</div>
+      <h3>Dupla advertência</h3>
+      <p>Texto processual da expulsão é limpo; o evento entra como amarelo para análise disciplinar.</p>
+    </div>
+    <div class="pipeline-step amber">
+      <div class="pipeline-num">6</div>
+      <h3>Sinal de VAR</h3>
+      <p>Termos como <em>VAR</em> e <em>checagem</em> identificam menções ao protocolo de vídeo nos acréscimos.</p>
     </div>
   </div>
 </section>
@@ -1094,17 +1106,17 @@
       <h3>BERTopic P1</h3>
       <p>Clusters exploratórios geram pares positivos para treino contrastivo.</p>
     </div>
-    <div class="pipeline-step green">
+    <div class="pipeline-step blue">
       <div class="pipeline-num">4</div>
       <h3>Fine-tuning</h3>
       <p>MultipleNegativesRankingLoss, 1 epoch, pares sintéticos por cluster.</p>
     </div>
-    <div class="pipeline-step blue">
+    <div class="pipeline-step red">
       <div class="pipeline-num">5</div>
       <h3>BERTopic P2</h3>
       <p>Nova clusterização com embeddings fine-tunados, menos outliers e melhor separação.</p>
     </div>
-    <div class="pipeline-step red manual">
+    <div class="pipeline-step amber">
       <div class="pipeline-num">6</div>
       <h3>Rotulagem manual</h3>
       <p>Taxonomia de 18 grupos, auditoria dos outliers e score de representatividade.</p>
@@ -1149,32 +1161,63 @@
     <span class="tag green">Falta tática em ataque promissor</span>
     <span class="tag amber">Retardar reinício do jogo</span>
     <span class="tag blue">Agarrar ou segurar adversário</span>
-    <span class="tag green">Confronto físico com adversário</span>
     <span class="tag red">Conduta antidesportiva</span>
+    <span class="tag green">Confronto físico com adversário</span>
     <span class="tag amber">Comemoração irregular</span>
     <span class="tag blue">Gesto ou linguagem ofensiva</span>
     <span class="tag red">Conduta violenta</span>
     <span class="tag green">Jogo brusco grave</span>
     <span class="tag amber">Toque de mão na bola</span>
     <span class="tag blue">Impedir clara oportunidade de gol</span>
-    <span class="tag green">Simulação</span>
     <span class="tag red">Insubordinação da comissão técnica</span>
+    <span class="tag green">Simulação</span>
     <span class="tag amber">Não respeitar distância regulamentar</span>
     <span class="tag blue">Infringir persistentemente as regras</span>
     <span class="tag red">Entrar ou sair do campo sem autorização</span>
   </div>
-  <div class="content-grid three-col" style="flex:0 0 auto;">
+  <div class="content-grid three-col" style="flex: 0 0 auto;">
     <div class="card blue">
-      <h3>Clusters mapeados</h3>
-      <p>79 clusters finais foram revisados e ligados aos rótulos semânticos.</p>
+      <h3>Infrações das Leis do Jogo</h3>
+      <p>Cada grupo corresponde a um tipo de infração disciplinar previsto nas Leis do Jogo da FIFA — as mesmas categorias para as quais os árbitros brasileiros são treinados a lavrar a súmula.</p>
     </div>
     <div class="card green">
-      <h3>Outliers auditados</h3>
-      <p>504 textos únicos fora dos clusters densos receberam tratamento manual.</p>
+      <h3>Granularidade analítica</h3>
+      <p>18 grupos permitem distinguir comportamentos com padrões distintos por time, árbitro e temporada. Menos grupos ocultariam contrastes relevantes; mais fragmentariam infrações com a mesma raiz.</p>
     </div>
     <div class="card amber">
-      <h3>Âncoras lexicais</h3>
-      <p>Regras pontuais corrigem casos decisivos como DOGSO, simulação, mão e força excessiva.</p>
+      <h3>Presença consistente nos dados</h3>
+      <p>Todos os 18 grupos aparecem com frequência regular nas três competições e no intervalo 2020–2026. Nenhum grupo foi criado para eventos raros — cada um reflete um padrão disciplinar recorrente.</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="header">
+    <div>
+      <div class="kicker">Mapeamento e avaliação</div>
+      <h2>79 clusters → 18 grupos e score de representatividade</h2>
+    </div>
+  </div>
+  <div class="content-grid two-col">
+    <div class="stack">
+      <div class="card blue">
+        <h3>Mapeamento dos clusters</h3>
+        <p>Os 79 clusters do BERTopic P2 foram revisados um a um. Cada cluster recebeu um rótulo da taxonomia com base nos textos mais representativos e nas palavras-chave c-TF-IDF do próprio cluster.</p>
+      </div>
+      <div class="card red">
+        <h3>Tratamento de outliers</h3>
+        <p>504 textos únicos sem cluster denso (label <code>-1</code> no HDBSCAN) foram atribuídos ao grupo mais próximo por similaridade cosseno e confirmados por leitura humana.</p>
+      </div>
+    </div>
+    <div class="stack">
+      <div class="card green">
+        <h3>Score de representatividade</h3>
+        <p>Para cada grupo calcula-se o centroide ponderado pelo número de eventos no espaço do modelo fine-tunado. O <strong>score_mean</strong> é a similaridade cosseno média de todos os textos do grupo ao seu centroide — quanto maior, mais coeso o grupo.</p>
+      </div>
+      <div class="card amber">
+        <h3>Interpretação do score</h3>
+        <p>Grupos com <strong>score_mean &gt; 0.85</strong> têm alta coesão (Simulação, Protesto, Jogo brusco). Grupos com score menor são semanticamente mais amplos, como Ação temerária (0.58), que abrange entradas de diferentes intensidades.</p>
+      </div>
     </div>
   </div>
 </section>
@@ -1288,7 +1331,7 @@
   <div class="header">
     <div>
       <div class="kicker">Baseline LLM</div>
-      <h2>Score médio por grupo: final versus Ollama</h2>
+      <h2>Coesão semântica por grupo: BERTopic + fine-tuning vs. LLM zero-shot</h2>
     </div>
   </div>
   <div class="plot-frame flush">
@@ -1298,8 +1341,7 @@
 
 <section class="slide-closing">
   <div>
-    <div class="kicker">Fechamento</div>
-    <h1>Conclusões e próximos passos</h1>
+    <h1 style="text-align: center;">Conclusões e próximos passos</h1>
     <div class="closing-grid">
       <div class="card green">
         <h3>Funcionou</h3>
