@@ -39,7 +39,7 @@
 \def\Title#1{\noindent{\veryHuge #1}}
 
 \newtcolorbox{estat}[1]{
-  colback=#1, colframe=black,
+  colback=#1!35, colframe=black,
   arc=10pt, boxrule=1.5pt,
   left=4pt, right=4pt, top=6pt, bottom=6pt
 }
@@ -52,10 +52,10 @@
 
 \newcommand{\timefaltas}[5]{
 \begin{destaque}{#2}
-{\large\bfseries #1}\\[-1mm]
-{\small #3}\\[-0.5mm]
-{\small #4}\\[-0.5mm]
-{\small #5}
+{\Large\bfseries #1}\\[1mm]
+{\large #3}\\[0.5mm]
+{\large #4}\\[0.5mm]
+{\large #5}
 \end{destaque}
 }
 
@@ -65,10 +65,10 @@
   arc=8pt, boxrule=3pt,
   left=10pt, right=10pt, top=5pt, bottom=5pt
 ]
-{\large\bfseries #1}\\[-1mm]
-{\small #2}\\[-0.5mm]
-{\small #3}\\[-0.5mm]
-{\small #4}
+{\Large\bfseries #1}\\[1mm]
+{\large #2}\\[0.5mm]
+{\large #3}\\[0.5mm]
+{\large #4}
 \end{tcolorbox}
 }
 
@@ -78,10 +78,10 @@
   arc=8pt, boxrule=3pt,
   left=10pt, right=10pt, top=5pt, bottom=5pt
 ]
-{\large\bfseries #1}\\[-1mm]
-{\small #4}\\[-0.5mm]
-{\small #5}\\[-0.5mm]
-{\small #6}
+{\Large\bfseries #1}\\[1mm]
+{\large #4}\\[0.5mm]
+{\large #5}\\[0.5mm]
+{\large #6}
 \end{tcolorbox}
 }
 
@@ -97,10 +97,10 @@
 \newcommand{\arbitrofaltas}[4]{%
 \begin{minipage}[t]{\linewidth}
 \raggedright
-{\large\bfseries #1}\\[-0.5mm]
-{\small #2}\\[-0.5mm]
-{\small #3}\\[-0.5mm]
-{\small #4}
+{\large\bfseries #1}\\[0.5mm]
+{\normalsize #2}\\[0.5mm]
+{\normalsize #3}\\[0.5mm]
+{\normalsize #4}
 \end{minipage}%
 }
 
@@ -198,7 +198,7 @@ Veja como a \emph{mesma falta} pode aparecer de formas diferentes:
 
 \vspace{2mm}
 \begin{destaque}{plotyellow}
-{\normalsize\bfseries\color{plotgray} A\c{c}\~ao temer\'aria:}\\[1mm]
+{\large\bfseries\color{plotgray} A\c{c}\~ao temer\'aria:}\\[1mm]
 \itshape\large
 ``Por cal\c{c}ar seu advers\'ario de maneira temer\'aria'' \\[1.5mm]
 ``Entrada temer\'aria sobre o advers\'ario'' \\[1.5mm]
@@ -207,7 +207,7 @@ Veja como a \emph{mesma falta} pode aparecer de formas diferentes:
 
 \vspace{2mm}
 \begin{destaque}{plotred}
-{\normalsize\bfseries\color{plotgray} Protesto contra a arbitragem:}\\[1mm]
+{\large\bfseries\color{plotgray} Protesto contra a arbitragem:}\\[1mm]
 \itshape\large
 ``Por reclamar ostensivamente com palavras e gestos.'' \\[1.5mm]
 ``Desaprovar com palavras e gestos a decis\~ao da arbitragem.'' \\[1.5mm]
@@ -216,7 +216,7 @@ Veja como a \emph{mesma falta} pode aparecer de formas diferentes:
 
 \vspace{2mm}
 \begin{destaque}{plotgreen}
-{\normalsize\bfseries\color{plotgray} Falta t\'atica em ataque promissor:}\\[1mm]
+{\large\bfseries\color{plotgray} Falta t\'atica em ataque promissor:}\\[1mm]
 \itshape\large
 ``Por impedir um ataque promissor.'' \\[1.5mm]
 ``Por cal\c{c}ar seu advers\'ario impedindo um ataque promissor.'' \\[1.5mm]
@@ -225,7 +225,7 @@ Veja como a \emph{mesma falta} pode aparecer de formas diferentes:
 
 \vspace{2mm}
 \begin{destaque}{plotblue}
-{\normalsize\bfseries\color{plotgray} Toque de m\~ao na bola:}\\[1mm]
+{\large\bfseries\color{plotgray} Toque de m\~ao na bola:}\\[1mm]
 \itshape\large
 ``Por tocar a bola com a m\~ao de forma deliberada.'' \\[1.5mm]
 ``Por interceptar a bola com o bra\c{c}o.'' \\[1.5mm]
@@ -384,22 +384,20 @@ Veja como a \emph{mesma falta} pode aparecer de formas diferentes:
 %%----------------------------------------------------------
 %% COL DIREITA 3 — Conclusao
 %%----------------------------------------------------------
-\begin{textblock}{6.0}(7, 13.5)
+\begin{textblock}{6.0}(7, 14)
 
 \LHead{Conclus\~ao}
 
 \Large
-A ci\^encia de dados ajudou a transformar milhares de s\'umulas em um
-resumo mais f\'acil de entender.
+A ci\^encia de dados ajudou a transformar milhares de s\'umulas em
+algo muito mais f\'acil de entender.
 
 Em vez de ler cart\~ao por cart\~ao, usamos o computador para encontrar
 frases parecidas, organizar os motivos em grupos e mostrar padr\~oes que
 aparecem nos jogos.
 
-Assim, um problema grande e repetitivo virou uma vis\~ao clara sobre o que
-acontece dentro de campo. O computador ajuda a organizar os dados, e as
-pessoas usam esses resultados para fazer perguntas melhores e tomar
-decis\~oes com mais informa\c{c}\~ao.
+Assim, um problema grande e repetitivo virou uma vis\~ao clara sobre
+o que acontece dentro de campo.
 
 \end{textblock}
 
