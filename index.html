@@ -11,7 +11,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
-    /* ===== BASE ===== */
     :root {
       --bg: #E1E2E5;
       --red: #EE2617;
@@ -20,15 +19,12 @@
       --blue: #0E54B6;
       --black: #000000;
       --white: #FFFFFF;
-      --muted: rgba(0, 0, 0, 0.68);
-      --line: rgba(16, 16, 16, 0.18);
-      --shadow: 0 10px 26px rgba(16, 16, 16, 0.08);
+      --muted: rgba(0,0,0,0.68);
+      --line: rgba(16,16,16,0.18);
+      --shadow: 0 10px 26px rgba(16,16,16,0.08);
     }
 
-    .reveal-viewport,
-    .reveal {
-      background: var(--bg);
-    }
+    .reveal-viewport, .reveal { background: var(--bg); }
 
     .reveal {
       color: var(--black);
@@ -36,79 +32,32 @@
       font-size: 22px;
     }
 
-    .reveal .slides {
-      text-align: left;
-    }
+    .reveal .slides { text-align: left; }
 
     .reveal .slides section {
+      background: var(--bg) !important;
       box-sizing: border-box;
       height: 100%;
+      letter-spacing: 0;
       padding: 0;
-      background: var(--bg) !important;
-      letter-spacing: 0;
     }
 
-    .reveal h1,
-    .reveal h2,
-    .reveal h3,
-    .reveal p {
-      letter-spacing: 0;
-      margin: 0;
-      text-transform: none;
+    .reveal h1, .reveal h2, .reveal h3, .reveal p {
+      letter-spacing: 0; margin: 0; text-transform: none;
     }
 
-    .reveal h1 {
-      font-size: 2.55em;
-      font-weight: 800;
-      line-height: 1.05;
-      max-width: 760px;
-    }
+    .reveal h1 { font-size: 2.55em; font-weight: 800; line-height: 1.05; }
+    .reveal h2 { font-size: 1.55em; font-weight: 800; line-height: 1.12; }
+    .reveal h3 { font-size: 0.9em;  font-weight: 800; line-height: 1.18; }
+    .reveal p  { color: var(--muted); font-size: 0.82em; line-height: 1.46; }
+    .reveal strong { color: var(--black); font-weight: 800; }
 
-    .reveal h2 {
-      font-size: 1.62em;
-      font-weight: 800;
-      line-height: 1.12;
-    }
-
-    .reveal h3 {
-      font-size: 0.9em;
-      font-weight: 800;
-      line-height: 1.18;
-    }
-
-    .reveal p {
-      color: var(--muted);
-      font-size: 0.82em;
-      line-height: 1.46;
-    }
-
-    .reveal strong {
-      color: var(--black);
-      font-weight: 800;
-    }
-
-    .reveal code {
-      background: rgba(255, 255, 255, 0.62);
-      border: 1px solid var(--line);
-      border-radius: 5px;
-      color: var(--black);
-      font-size: 0.88em;
-      padding: 0.08em 0.28em;
-    }
-
+    /* ---- layouts ---- */
     .slide {
       display: flex !important;
       flex-direction: column;
-      gap: 18px;
-      padding: 44px 58px !important;
-    }
-
-    .slide-title {
-      display: grid !important;
-      grid-template-columns: minmax(0, 1.1fr) 440px;
-      align-items: center;
-      gap: 46px;
-      padding: 54px 64px !important;
+      gap: 14px;
+      padding: 36px 52px !important;
     }
 
     .slide-closing {
@@ -118,157 +67,46 @@
       text-align: center !important;
     }
 
-    .slide-closing > div {
-      text-align: center;
-      width: 100%;
-    }
+    .slide-closing > div { text-align: center; width: 100%; }
 
+    /* ---- header ---- */
     .header {
       align-items: flex-end;
       border-bottom: 3px solid var(--black);
       display: flex;
       gap: 18px;
       justify-content: space-between;
-      padding-bottom: 12px;
+      padding-bottom: 10px;
     }
 
-    .kicker {
-      color: var(--blue);
-      font-size: 0.8em;
-      font-weight: 800;
-      margin-bottom: 6px;
-    }
+    .kicker { color: var(--blue); font-size: 0.78em; font-weight: 800; margin-bottom: 5px; }
 
-    .subtitle {
-      color: var(--muted);
-      font-size: 0.95em;
-      line-height: 1.45;
-      max-width: 720px;
-      margin-top: 18px;
-    }
-
-    .authors {
-      color: var(--black);
-      font-size: 0.76em;
-      font-weight: 800;
-      margin-top: 28px;
-    }
-
-    .chips,
-    .tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    .chip,
-    .tag {
-      align-items: center;
-      background: var(--white);
-      border: 2px solid var(--black);
-      border-radius: 999px;
-      color: var(--black);
-      display: inline-flex;
-      font-size: 0.68em;
-      font-weight: 800;
-      min-height: 30px;
-      padding: 4px 12px;
-      white-space: nowrap;
-    }
-
-    .chip.blue, .tag.blue { border-color: var(--blue); }
-    .chip.red,  .tag.red  { border-color: var(--red);  }
-    .chip.green,.tag.green{ border-color: var(--green);}
-    .chip.amber,.tag.amber{ border-color: var(--amber);}
-
-    .title-pitch { width: 100%; }
-
-    .pitch-line, .pitch-arc {
-      fill: none;
-      stroke: var(--black);
-      stroke-width: 1.8;
-      vector-effect: non-scaling-stroke;
-    }
-
-    .pitch-mark { fill: var(--black); }
-
-    .pitch-player {
-      stroke: var(--black);
-      stroke-width: 0.78;
-      vector-effect: non-scaling-stroke;
-    }
-
-    .pitch-player.team-a { fill: var(--blue); }
-    .pitch-player.team-b { fill: var(--red);  }
-
-    .card,
-    .metric,
-    .step,
-    .note,
-    .quote {
+    /* ---- card ---- */
+    .card {
       background: var(--white);
       border: 2px solid var(--black);
       border-radius: 8px;
       box-shadow: var(--shadow);
       box-sizing: border-box;
+      padding: 16px 18px;
     }
-
-    .card { padding: 18px 19px; }
 
     .card.blue   { border-top: 8px solid var(--blue);  }
     .card.red    { border-top: 8px solid var(--red);   }
     .card.amber  { border-top: 8px solid var(--amber); }
     .card.green  { border-top: 8px solid var(--green); }
+    .card h3     { margin-bottom: 8px; }
 
-    .card h3  { margin-bottom: 8px; }
-    .card p+p { margin-top: 8px;    }
-
-    .metrics {
-      display: grid;
-      gap: 12px;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
-
-    .metrics.three {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-
-    .metric {
-      background: var(--white);
-      border: 2px solid var(--black);
-      border-radius: 8px;
-      box-shadow: var(--shadow);
-      min-height: 98px;
-      padding: 14px 16px;
-    }
-
-    .metric .num {
-      color: var(--blue);
-      font-size: 1.86em;
-      font-weight: 800;
-      line-height: 1;
-    }
-
-    .metric:nth-child(2) .num { color: var(--red);   }
-    .metric:nth-child(3) .num { color: var(--green); }
-    .metric:nth-child(4) .num { color: var(--amber); }
-
-    .metric .label {
-      color: var(--muted);
-      font-size: 0.66em;
-      font-weight: 700;
-      line-height: 1.25;
-      margin-top: 8px;
-    }
-
+    /* ---- closing grid ---- */
     .closing-grid {
       display: grid;
       gap: 16px;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0,1fr));
       margin-top: 26px;
       width: 100%;
     }
 
+    /* ---- reveal progress ---- */
     .reveal .progress { color: var(--red); }
 
     .reveal .slide-number {
@@ -279,12 +117,29 @@
       font-weight: 800;
     }
 
-    /* ===== TRIVIA ===== */
+    /* ============================================================
+       TRIVIA COMPONENTS
+    ============================================================ */
 
+    .q-badge {
+      align-items: center;
+      background: var(--black);
+      border-radius: 999px;
+      color: var(--white);
+      display: inline-flex;
+      font-size: 0.72em;
+      font-weight: 800;
+      padding: 5px 14px;
+      white-space: nowrap;
+    }
+
+    .q-badge.bonus { background: var(--amber); color: var(--black); }
+
+    /* 2 × 2 grid */
     .option-grid {
       display: grid;
       flex: 1;
-      gap: 14px;
+      gap: 13px;
       grid-template-columns: 1fr 1fr;
       min-height: 0;
     }
@@ -298,8 +153,8 @@
       box-sizing: border-box;
       display: flex;
       gap: 16px;
-      padding: 18px 20px;
-      transition: opacity 0.35s, border-color 0.35s, border-top-width 0.2s;
+      padding: 16px 20px;
+      transition: opacity 0.35s, border-color 0.25s;
     }
 
     .option-letter {
@@ -315,17 +170,12 @@
       width: 40px;
     }
 
-    .option-card:nth-child(1) .option-letter { background: var(--blue);                     }
-    .option-card:nth-child(2) .option-letter { background: var(--red);                      }
-    .option-card:nth-child(3) .option-letter { background: var(--green);                    }
-    .option-card:nth-child(4) .option-letter { background: var(--amber); color: var(--black);}
+    .option-card:nth-child(1) .option-letter { background: var(--blue);                       }
+    .option-card:nth-child(2) .option-letter { background: var(--red);                        }
+    .option-card:nth-child(3) .option-letter { background: var(--green);                      }
+    .option-card:nth-child(4) .option-letter { background: var(--amber); color: var(--black); }
 
-    .option-text {
-      color: var(--black);
-      font-size: 0.9em;
-      font-weight: 700;
-      line-height: 1.3;
-    }
+    .option-text { color: var(--black); font-size: 0.9em; font-weight: 700; line-height: 1.3; }
 
     .option-check {
       align-items: center;
@@ -342,21 +192,12 @@
       width: 28px;
     }
 
-    /* ---- revealed state (triggered via JS when fragment appears) ---- */
-    .trivia-slide.revealed .option-card.wrong {
-      opacity: 0.22;
-    }
+    /* revealed state */
+    .trivia-slide.revealed .option-card.wrong   { opacity: 0.18; }
+    .trivia-slide.revealed .option-card.correct { border-color: var(--green); border-top: 8px solid var(--green); }
+    .trivia-slide.revealed .option-card.correct .option-check { display: flex; }
 
-    .trivia-slide.revealed .option-card.correct {
-      border-color: var(--green);
-      border-top: 8px solid var(--green);
-    }
-
-    .trivia-slide.revealed .option-card.correct .option-check {
-      display: flex;
-    }
-
-    /* ---- fun fact (hidden until fragment) ---- */
+    /* fun fact (fragment) */
     .fun-fact {
       background: var(--white);
       border: 2px solid var(--black);
@@ -364,35 +205,22 @@
       border-radius: 8px;
       box-shadow: var(--shadow);
       color: var(--muted);
-      font-size: 0.8em;
-      line-height: 1.5;
-      padding: 13px 18px;
+      font-size: 0.78em;
+      line-height: 1.52;
+      padding: 11px 17px;
     }
 
-    .fun-fact strong {
-      color: var(--black);
-      font-weight: 800;
+    .fun-fact strong { color: var(--black); font-weight: 800; }
+
+    /* gabarito */
+    .gabarito-grid {
+      display: grid;
+      flex: 1;
+      gap: 8px;
+      grid-template-columns: 1fr 1fr;
+      min-height: 0;
     }
 
-    /* hide fun-fact when not yet revealed (fragment) */
-    .fun-fact.fragment.visible {
-      display: block !important;
-    }
-
-    /* ---- header badge ---- */
-    .q-badge {
-      align-items: center;
-      background: var(--black);
-      border-radius: 999px;
-      color: var(--white);
-      display: inline-flex;
-      font-size: 0.72em;
-      font-weight: 800;
-      padding: 5px 14px;
-      white-space: nowrap;
-    }
-
-    /* closing result grid */
     .result-row {
       align-items: center;
       background: var(--white);
@@ -401,33 +229,23 @@
       box-shadow: var(--shadow);
       display: flex;
       gap: 14px;
-      padding: 13px 18px;
+      padding: 11px 18px;
     }
 
     .result-dot {
       border-radius: 50%;
       flex-shrink: 0;
-      height: 14px;
-      width: 14px;
+      height: 12px;
+      width: 12px;
     }
 
-    .result-dot.blue   { background: var(--blue);  }
-    .result-dot.red    { background: var(--red);   }
-    .result-dot.green  { background: var(--green); }
-    .result-dot.amber  { background: var(--amber); }
+    .result-dot.blue  { background: var(--blue);  }
+    .result-dot.red   { background: var(--red);   }
+    .result-dot.green { background: var(--green); }
+    .result-dot.amber { background: var(--amber); }
 
-    .result-label {
-      font-size: 0.76em;
-      font-weight: 700;
-      color: var(--black);
-    }
-
-    .result-answer {
-      color: var(--muted);
-      font-size: 0.72em;
-      margin-left: auto;
-      font-weight: 600;
-    }
+    .result-label  { color: var(--black); font-size: 0.72em; font-weight: 700; }
+    .result-answer { color: var(--muted); font-size: 0.68em; font-weight: 600; margin-left: auto; white-space: nowrap; }
   </style>
 </head>
 <body>
@@ -435,74 +253,59 @@
 <div class="slides">
 
 
-<!-- ================================================ -->
-<!-- INTRO                                            -->
-<!-- ================================================ -->
-<section class="slide-title">
-  <div>
-    <div class="kicker">Quiz — Dados de 5.681 súmulas CBF</div>
-    <h1>O que os dados revelam sobre cada time?</h1>
-    <p class="subtitle">5 perguntas sobre os padrões de cartão no futebol brasileiro. Sem espiar o poster — confie no chute!</p>
-    <div class="chips" style="margin-top: 26px;">
-      <span class="chip blue">Série A &amp; B</span>
-      <span class="chip red">Copa do Brasil</span>
-      <span class="chip green">2020–2026</span>
-      <span class="chip amber">25.838 cartões</span>
+<!-- ================================================================ -->
+<!-- Q 01 — MAIS CARTÕES NO TOTAL                                     -->
+<!-- Resposta: B) Red Bull Bragantino (1.003)                          -->
+<!-- ================================================================ -->
+<section class="slide trivia-slide">
+  <div class="header">
+    <div>
+      <div class="kicker">Pergunta 1 de 10 — Times</div>
+      <h2>Qual time levou <strong>mais cartões</strong> no total — em todas as competições?</h2>
+    </div>
+    <span class="q-badge">1 / 10</span>
+  </div>
+
+  <div class="option-grid">
+    <div class="option-card wrong">
+      <div class="option-letter">A</div>
+      <div class="option-text">Flamengo</div>
+      <div class="option-check">✓</div>
+    </div>
+    <div class="option-card correct">
+      <div class="option-letter">B</div>
+      <div class="option-text">Red Bull Bragantino</div>
+      <div class="option-check">✓</div>
+    </div>
+    <div class="option-card wrong">
+      <div class="option-letter">C</div>
+      <div class="option-text">Palmeiras</div>
+      <div class="option-check">✓</div>
+    </div>
+    <div class="option-card wrong">
+      <div class="option-letter">D</div>
+      <div class="option-text">Corinthians</div>
+      <div class="option-check">✓</div>
     </div>
   </div>
 
-  <div class="title-pitch">
-    <svg viewBox="-2 -2 109 72" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Campo de futebol">
-      <rect class="pitch-line" x="0" y="0" width="105" height="68"/>
-      <line class="pitch-line" x1="52.5" y1="0" x2="52.5" y2="68"/>
-      <circle class="pitch-arc" cx="52.5" cy="34" r="9.15"/>
-      <circle class="pitch-mark" cx="52.5" cy="34" r="0.75"/>
-      <rect class="pitch-line" x="0" y="13.84" width="16.5" height="40.32"/>
-      <rect class="pitch-line" x="88.5" y="13.84" width="16.5" height="40.32"/>
-      <rect class="pitch-line" x="0" y="24.84" width="5.5" height="18.32"/>
-      <rect class="pitch-line" x="99.5" y="24.84" width="5.5" height="18.32"/>
-      <circle class="pitch-mark" cx="11" cy="34" r="0.75"/>
-      <circle class="pitch-mark" cx="94" cy="34" r="0.75"/>
-      <path class="pitch-arc" d="M16.47 26.68 A9.15 9.15 0 0 1 16.47 41.32"/>
-      <path class="pitch-arc" d="M88.53 41.32 A9.15 9.15 0 0 1 88.53 26.68"/>
-      <circle class="pitch-player team-a" cx="7.5"  cy="34"   r="1.85"/>
-      <circle class="pitch-player team-a" cx="18.5" cy="11.5" r="1.85"/>
-      <circle class="pitch-player team-a" cx="22"   cy="24"   r="1.85"/>
-      <circle class="pitch-player team-a" cx="24.5" cy="43.5" r="1.85"/>
-      <circle class="pitch-player team-a" cx="19.5" cy="57.5" r="1.85"/>
-      <circle class="pitch-player team-a" cx="37.5" cy="15"   r="1.85"/>
-      <circle class="pitch-player team-a" cx="41"   cy="31.5" r="1.85"/>
-      <circle class="pitch-player team-a" cx="46"   cy="46.5" r="1.85"/>
-      <circle class="pitch-player team-a" cx="39"   cy="55"   r="1.85"/>
-      <circle class="pitch-player team-a" cx="61.5" cy="26.5" r="1.85"/>
-      <circle class="pitch-player team-a" cx="67"   cy="44"   r="1.85"/>
-      <circle class="pitch-player team-b" cx="97"   cy="34"   r="1.85"/>
-      <circle class="pitch-player team-b" cx="85.5" cy="56"   r="1.85"/>
-      <circle class="pitch-player team-b" cx="81.5" cy="44.5" r="1.85"/>
-      <circle class="pitch-player team-b" cx="79"   cy="24.5" r="1.85"/>
-      <circle class="pitch-player team-b" cx="84"   cy="10.5" r="1.85"/>
-      <circle class="pitch-player team-b" cx="66"   cy="54"   r="1.85"/>
-      <circle class="pitch-player team-b" cx="62.5" cy="39"   r="1.85"/>
-      <circle class="pitch-player team-b" cx="58.5" cy="22"   r="1.85"/>
-      <circle class="pitch-player team-b" cx="64"   cy="13.5" r="1.85"/>
-      <circle class="pitch-player team-b" cx="44"   cy="42.5" r="1.85"/>
-      <circle class="pitch-player team-b" cx="38.5" cy="28"   r="1.85"/>
-    </svg>
+  <div class="fun-fact fragment" data-answer="true">
+    <strong>Red Bull Bragantino!</strong> 1.003 cartões — mais que Fluminense (993), Palmeiras (942), Corinthians (937) e Flamengo (837). O Massa Bruta lidera o ranking geral, e de longe.
   </div>
 </section>
 
 
-<!-- ================================================ -->
-<!-- PERGUNTA 1                                       -->
-<!-- Resposta: B) Flamengo                            -->
-<!-- ================================================ -->
+<!-- ================================================================ -->
+<!-- Q 02 — AÇÃO TEMERÁRIA                                            -->
+<!-- Resposta: C) Fluminense (410)                                     -->
+<!-- ================================================================ -->
 <section class="slide trivia-slide">
   <div class="header">
     <div>
-      <div class="kicker">Pergunta 1 de 5 — Times</div>
-      <h2>Qual time tem <strong>Ação temerária</strong> como principal destaque disciplinar?</h2>
+      <div class="kicker">Pergunta 2 de 10 — Times</div>
+      <h2>Qual time levou mais cartões de <strong>Ação temerária</strong>?</h2>
     </div>
-    <span class="q-badge">1 / 5</span>
+    <span class="q-badge">2 / 10</span>
   </div>
 
   <div class="option-grid">
@@ -511,40 +314,40 @@
       <div class="option-text">Corinthians</div>
       <div class="option-check">✓</div>
     </div>
-    <div class="option-card correct">
+    <div class="option-card wrong">
       <div class="option-letter">B</div>
       <div class="option-text">Flamengo</div>
       <div class="option-check">✓</div>
     </div>
-    <div class="option-card wrong">
+    <div class="option-card correct">
       <div class="option-letter">C</div>
-      <div class="option-text">São Paulo</div>
+      <div class="option-text">Fluminense</div>
       <div class="option-check">✓</div>
     </div>
     <div class="option-card wrong">
       <div class="option-letter">D</div>
-      <div class="option-text">Fluminense</div>
+      <div class="option-text">Red Bull Bragantino</div>
       <div class="option-check">✓</div>
     </div>
   </div>
 
   <div class="fun-fact fragment" data-answer="true">
-    <strong>Flamengo!</strong> Ação temerária é também o tipo de cartão mais comum em todo o dataset — mais de <strong>11.400 registros</strong> em 7 anos. No Flamengo é o destaque #1, acima de comemoração irregular e confronto físico.
+    <strong>Fluminense!</strong> 410 cartões de ação temerária — acima de Bragantino (406), Corinthians (391) e Flamengo (385). O Tricolor Carioca é o time com mais entradas duras do dataset.
   </div>
 </section>
 
 
-<!-- ================================================ -->
-<!-- PERGUNTA 2                                       -->
-<!-- Resposta: A) Palmeiras                           -->
-<!-- ================================================ -->
+<!-- ================================================================ -->
+<!-- Q 03 — GESTO OU LINGUAGEM OFENSIVA                               -->
+<!-- Resposta: A) Palmeiras (13)                                       -->
+<!-- ================================================================ -->
 <section class="slide trivia-slide">
   <div class="header">
     <div>
-      <div class="kicker">Pergunta 2 de 5 — Times</div>
-      <h2>Em qual time <strong>Gesto ou linguagem ofensiva</strong> é o principal destaque?</h2>
+      <div class="kicker">Pergunta 3 de 10 — Times</div>
+      <h2>Qual time levou mais cartões de <strong>Gesto ou linguagem ofensiva</strong>?</h2>
     </div>
-    <span class="q-badge">2 / 5</span>
+    <span class="q-badge">3 / 10</span>
   </div>
 
   <div class="option-grid">
@@ -560,7 +363,7 @@
     </div>
     <div class="option-card wrong">
       <div class="option-letter">C</div>
-      <div class="option-text">Santos</div>
+      <div class="option-text">São Paulo</div>
       <div class="option-check">✓</div>
     </div>
     <div class="option-card wrong">
@@ -571,22 +374,22 @@
   </div>
 
   <div class="fun-fact fragment" data-answer="true">
-    <strong>Palmeiras!</strong> O Verdão lidera em Gesto ou linguagem ofensiva e também aparece com Comemoração irregular e Protesto contra a arbitragem no top 3. Mais discussão do que violência.
+    <strong>Palmeiras!</strong> 13 cartões por gesto ou linguagem ofensiva — o maior número entre todos os grandes clubes. É uma categoria rara (o total no dataset é pequeno), mas o Verdão lidera.
   </div>
 </section>
 
 
-<!-- ================================================ -->
-<!-- PERGUNTA 3                                       -->
-<!-- Resposta: C) Santos                              -->
-<!-- ================================================ -->
+<!-- ================================================================ -->
+<!-- Q 04 — PROTESTO CONTRA A ARBITRAGEM                              -->
+<!-- Resposta: D) São Paulo (183)                                      -->
+<!-- ================================================================ -->
 <section class="slide trivia-slide">
   <div class="header">
     <div>
-      <div class="kicker">Pergunta 3 de 5 — Times</div>
-      <h2>Qual time tem <strong>Agarrar ou segurar adversário</strong> no seu top 3 de cartões?</h2>
+      <div class="kicker">Pergunta 4 de 10 — Times</div>
+      <h2>Qual time levou mais cartões de <strong>Protesto contra a arbitragem</strong>?</h2>
     </div>
-    <span class="q-badge">3 / 5</span>
+    <span class="q-badge">4 / 10</span>
   </div>
 
   <div class="option-grid">
@@ -600,88 +403,214 @@
       <div class="option-text">Corinthians</div>
       <div class="option-check">✓</div>
     </div>
-    <div class="option-card correct">
-      <div class="option-letter">C</div>
-      <div class="option-text">Santos</div>
-      <div class="option-check">✓</div>
-    </div>
-    <div class="option-card wrong">
-      <div class="option-letter">D</div>
-      <div class="option-text">São Paulo</div>
-      <div class="option-check">✓</div>
-    </div>
-  </div>
-
-  <div class="fun-fact fragment" data-answer="true">
-    <strong>Santos!</strong> É o único time desse grupo com Agarrar ou segurar adversário no destaque. O top 3 do Santos é Comemoração irregular, Agarrar e Confronto físico — um perfil bem diferente dos rivais paulistas.
-  </div>
-</section>
-
-
-<!-- ================================================ -->
-<!-- PERGUNTA 4                                       -->
-<!-- Resposta: B) São Paulo                           -->
-<!-- ================================================ -->
-<section class="slide trivia-slide">
-  <div class="header">
-    <div>
-      <div class="kicker">Pergunta 4 de 5 — Times</div>
-      <h2>Qual time tem <strong>Insubordinação da comissão técnica</strong> no seu top 3?</h2>
-    </div>
-    <span class="q-badge">4 / 5</span>
-  </div>
-
-  <div class="option-grid">
-    <div class="option-card wrong">
-      <div class="option-letter">A</div>
-      <div class="option-text">Flamengo</div>
-      <div class="option-check">✓</div>
-    </div>
-    <div class="option-card correct">
-      <div class="option-letter">B</div>
-      <div class="option-text">São Paulo</div>
-      <div class="option-check">✓</div>
-    </div>
     <div class="option-card wrong">
       <div class="option-letter">C</div>
-      <div class="option-text">Santos</div>
-      <div class="option-check">✓</div>
-    </div>
-    <div class="option-card wrong">
-      <div class="option-letter">D</div>
       <div class="option-text">Fluminense</div>
       <div class="option-check">✓</div>
     </div>
+    <div class="option-card correct">
+      <div class="option-letter">D</div>
+      <div class="option-text">São Paulo</div>
+      <div class="option-check">✓</div>
+    </div>
   </div>
 
   <div class="fun-fact fragment" data-answer="true">
-    <strong>São Paulo!</strong> Insubordinação da comissão técnica = cartão para o banco. O Tricolor Paulista é o único desse grupo com esse destaque. Seu top 3 completo é: Confronto físico, Protesto e Insubordinação técnica.
+    <strong>São Paulo!</strong> 183 cartões por reclamar do árbitro — acima de Palmeiras, Fluminense e Internacional, todos empatados com 164. O Tricolor paulista reclama mais que qualquer rival.
   </div>
 </section>
 
 
-<!-- ================================================ -->
-<!-- PERGUNTA 5 — BÔNUS: ÁRBITROS                    -->
-<!-- Resposta: B) Bruno Arleu                         -->
-<!-- ================================================ -->
+<!-- ================================================================ -->
+<!-- Q 05 — FALTA TÁTICA / IMPEDIR ATAQUE PROMISSOR                   -->
+<!-- Resposta: D) Palmeiras (128)                                      -->
+<!-- ================================================================ -->
 <section class="slide trivia-slide">
   <div class="header">
     <div>
-      <div class="kicker">Pergunta 5 de 5 — Bônus: Árbitros</div>
-      <h2>Qual árbitro tem <strong>Ação temerária</strong> como principal tipo de falta marcada?</h2>
+      <div class="kicker">Pergunta 5 de 10 — Times</div>
+      <h2>Qual time levou mais cartões de <strong>Falta tática</strong> (impedir ataque promissor)?</h2>
     </div>
-    <span class="q-badge">5 / 5</span>
+    <span class="q-badge">5 / 10</span>
   </div>
 
   <div class="option-grid">
     <div class="option-card wrong">
       <div class="option-letter">A</div>
-      <div class="option-text">Anderson Daronco</div>
+      <div class="option-text">Grêmio</div>
+      <div class="option-check">✓</div>
+    </div>
+    <div class="option-card wrong">
+      <div class="option-letter">B</div>
+      <div class="option-text">Red Bull Bragantino</div>
+      <div class="option-check">✓</div>
+    </div>
+    <div class="option-card wrong">
+      <div class="option-letter">C</div>
+      <div class="option-text">Atlético Mineiro</div>
+      <div class="option-check">✓</div>
+    </div>
+    <div class="option-card correct">
+      <div class="option-letter">D</div>
+      <div class="option-text">Palmeiras</div>
+      <div class="option-check">✓</div>
+    </div>
+  </div>
+
+  <div class="fun-fact fragment" data-answer="true">
+    <strong>Palmeiras de novo!</strong> 128 faltas táticas — acima de Bragantino (122) e Grêmio (116). O Verdão já liderou em gesto ofensivo na pergunta anterior e agora também lidera em falta tática.
+  </div>
+</section>
+
+
+<!-- ================================================================ -->
+<!-- Q 06 — JOGO BRUSCO GRAVE                                         -->
+<!-- Resposta: B) Sport Recife (12)                                    -->
+<!-- ================================================================ -->
+<section class="slide trivia-slide">
+  <div class="header">
+    <div>
+      <div class="kicker">Pergunta 6 de 10 — Times</div>
+      <h2>Qual time levou mais cartões de <strong>Jogo brusco grave</strong>?</h2>
+    </div>
+    <span class="q-badge">6 / 10</span>
+  </div>
+
+  <div class="option-grid">
+    <div class="option-card wrong">
+      <div class="option-letter">A</div>
+      <div class="option-text">Flamengo</div>
       <div class="option-check">✓</div>
     </div>
     <div class="option-card correct">
       <div class="option-letter">B</div>
-      <div class="option-text">Bruno Arleu</div>
+      <div class="option-text">Sport Recife</div>
+      <div class="option-check">✓</div>
+    </div>
+    <div class="option-card wrong">
+      <div class="option-letter">C</div>
+      <div class="option-text">Palmeiras</div>
+      <div class="option-check">✓</div>
+    </div>
+    <div class="option-card wrong">
+      <div class="option-letter">D</div>
+      <div class="option-text">Corinthians</div>
+      <div class="option-check">✓</div>
+    </div>
+  </div>
+
+  <div class="fun-fact fragment" data-answer="true">
+    <strong>Sport Recife!</strong> 12 cartões por jogo brusco grave — acima de Palmeiras (10), Flamengo e Corinthians (9 cada). O time pernambucano lidera um dos tipos de falta mais sérios do jogo.
+  </div>
+</section>
+
+
+<!-- ================================================================ -->
+<!-- Q 07 — CONDUTA VIOLENTA                                          -->
+<!-- Resposta: A) Athletico Paranaense (15)                            -->
+<!-- ================================================================ -->
+<section class="slide trivia-slide">
+  <div class="header">
+    <div>
+      <div class="kicker">Pergunta 7 de 10 — Times</div>
+      <h2>Qual time levou mais cartões de <strong>Conduta violenta</strong>?</h2>
+    </div>
+    <span class="q-badge">7 / 10</span>
+  </div>
+
+  <div class="option-grid">
+    <div class="option-card correct">
+      <div class="option-letter">A</div>
+      <div class="option-text">Athletico Paranaense</div>
+      <div class="option-check">✓</div>
+    </div>
+    <div class="option-card wrong">
+      <div class="option-letter">B</div>
+      <div class="option-text">Internacional</div>
+      <div class="option-check">✓</div>
+    </div>
+    <div class="option-card wrong">
+      <div class="option-letter">C</div>
+      <div class="option-text">Grêmio</div>
+      <div class="option-check">✓</div>
+    </div>
+    <div class="option-card wrong">
+      <div class="option-letter">D</div>
+      <div class="option-text">Corinthians</div>
+      <div class="option-check">✓</div>
+    </div>
+  </div>
+
+  <div class="fun-fact fragment" data-answer="true">
+    <strong>Athletico Paranaense!</strong> 15 cartões por conduta violenta — acima de Internacional (14) e Grêmio (10). O Furacão lidera no tipo de falta mais extremo: agressões fora da disputa de bola.
+  </div>
+</section>
+
+
+<!-- ================================================================ -->
+<!-- Q 08 — IMPEDIR CLARA OPORTUNIDADE DE GOL                        -->
+<!-- Resposta: D) América Mineiro (9)                                  -->
+<!-- ================================================================ -->
+<section class="slide trivia-slide">
+  <div class="header">
+    <div>
+      <div class="kicker">Pergunta 8 de 10 — Times</div>
+      <h2>Qual time levou mais cartões de <strong>Impedir clara oportunidade de gol</strong>?</h2>
+    </div>
+    <span class="q-badge">8 / 10</span>
+  </div>
+
+  <div class="option-grid">
+    <div class="option-card wrong">
+      <div class="option-letter">A</div>
+      <div class="option-text">Palmeiras</div>
+      <div class="option-check">✓</div>
+    </div>
+    <div class="option-card wrong">
+      <div class="option-letter">B</div>
+      <div class="option-text">Grêmio</div>
+      <div class="option-check">✓</div>
+    </div>
+    <div class="option-card wrong">
+      <div class="option-letter">C</div>
+      <div class="option-text">Fortaleza</div>
+      <div class="option-check">✓</div>
+    </div>
+    <div class="option-card correct">
+      <div class="option-letter">D</div>
+      <div class="option-text">América Mineiro</div>
+      <div class="option-check">✓</div>
+    </div>
+  </div>
+
+  <div class="fun-fact fragment" data-answer="true">
+    <strong>América Mineiro!</strong> 9 cartões por impedir oportunidade clara de gol — acima de Grêmio, Ceará, Palmeiras e Fortaleza, todos com 8. O Coelho lidera na falta que vem de salvar o gol com a mão ou derrubada intencional.
+  </div>
+</section>
+
+
+<!-- ================================================================ -->
+<!-- Q 09 — BÔNUS: ÁRBITRO COM MAIS VAR                              -->
+<!-- Resposta: B) Braulio da Silva (131)                               -->
+<!-- ================================================================ -->
+<section class="slide trivia-slide">
+  <div class="header">
+    <div>
+      <div class="kicker">Pergunta 9 de 10 — Bônus: Árbitros</div>
+      <h2>Qual árbitro esteve em mais partidas com <strong>consulta ao VAR</strong> registrada nas súmulas?</h2>
+    </div>
+    <span class="q-badge bonus">9 / 10</span>
+  </div>
+
+  <div class="option-grid">
+    <div class="option-card wrong">
+      <div class="option-letter">A</div>
+      <div class="option-text">Ramon Abatti Abel</div>
+      <div class="option-check">✓</div>
+    </div>
+    <div class="option-card correct">
+      <div class="option-letter">B</div>
+      <div class="option-text">Braulio da Silva</div>
       <div class="option-check">✓</div>
     </div>
     <div class="option-card wrong">
@@ -697,85 +626,142 @@
   </div>
 
   <div class="fun-fact fragment" data-answer="true">
-    <strong>Bruno Arleu!</strong> Seu top 3 é Ação temerária, Confronto físico e Jogo brusco grave — árbitro que lê o jogo pela força física. Wilton Pereira lidera em Gesto ou linguagem ofensiva; Raphael Claus em Conduta antidesportiva. Cada árbitro tem um estilo!
+    <strong>Braulio da Silva!</strong> 131 partidas com VAR registrado — 30 a mais que Ramon Abatti (101), quase o dobro de Raphael Claus (76). O árbitro que mais viveu polêmicas de vídeo em 7 anos de dataset.
   </div>
 </section>
 
 
-<!-- ================================================ -->
-<!-- GABARITO                                         -->
-<!-- ================================================ -->
+<!-- ================================================================ -->
+<!-- Q 10 — BÔNUS: TIME COM MAIS VAR                                 -->
+<!-- Resposta: C) Palmeiras (184)                                      -->
+<!-- ================================================================ -->
+<section class="slide trivia-slide">
+  <div class="header">
+    <div>
+      <div class="kicker">Pergunta 10 de 10 — Bônus: VAR</div>
+      <h2>Qual time esteve em mais partidas com <strong>consulta ao VAR</strong>?</h2>
+    </div>
+    <span class="q-badge bonus">10 / 10</span>
+  </div>
+
+  <div class="option-grid">
+    <div class="option-card wrong">
+      <div class="option-letter">A</div>
+      <div class="option-text">Flamengo</div>
+      <div class="option-check">✓</div>
+    </div>
+    <div class="option-card wrong">
+      <div class="option-letter">B</div>
+      <div class="option-text">Corinthians</div>
+      <div class="option-check">✓</div>
+    </div>
+    <div class="option-card correct">
+      <div class="option-letter">C</div>
+      <div class="option-text">Palmeiras</div>
+      <div class="option-check">✓</div>
+    </div>
+    <div class="option-card wrong">
+      <div class="option-letter">D</div>
+      <div class="option-text">São Paulo</div>
+      <div class="option-check">✓</div>
+    </div>
+  </div>
+
+  <div class="fun-fact fragment" data-answer="true">
+    <strong>Palmeiras pela terceira vez nesse quiz!</strong> 184 partidas com VAR — acima de São Paulo (180), Corinthians (176) e Flamengo (171). O Verdão apareceu em gesto ofensivo, falta tática e agora no VAR. Os dados não mentem.
+  </div>
+</section>
+
+
+<!-- ================================================================ -->
+<!-- GABARITO                                                          -->
+<!-- ================================================================ -->
 <section class="slide">
   <div class="header">
     <div>
       <div class="kicker">Gabarito</div>
-      <h2>Respostas certas — e o que os dados mostram</h2>
+      <h2>Respostas — 10 perguntas</h2>
     </div>
   </div>
 
-  <div style="display:flex; flex-direction:column; gap:10px; flex:1;">
-
-    <div class="result-row">
-      <div class="result-dot blue"></div>
-      <div class="result-label">P1 — Ação temerária</div>
-      <div class="result-answer">B) <strong>Flamengo</strong> · destaque #1 do time</div>
-    </div>
-
+  <div class="gabarito-grid">
     <div class="result-row">
       <div class="result-dot red"></div>
-      <div class="result-label">P2 — Gesto ou linguagem ofensiva</div>
-      <div class="result-answer">A) <strong>Palmeiras</strong> · destaque #1 do time</div>
+      <div class="result-label">P1 — Mais cartões no total</div>
+      <div class="result-answer">B) <strong>Red Bull Bragantino</strong> · 1.003</div>
     </div>
-
     <div class="result-row">
       <div class="result-dot green"></div>
-      <div class="result-label">P3 — Agarrar ou segurar adversário</div>
-      <div class="result-answer">C) <strong>Santos</strong> · único entre os 6 com esse destaque</div>
+      <div class="result-label">P2 — Ação temerária</div>
+      <div class="result-answer">C) <strong>Fluminense</strong> · 410</div>
     </div>
-
-    <div class="result-row">
-      <div class="result-dot amber"></div>
-      <div class="result-label">P4 — Insubordinação da comissão técnica</div>
-      <div class="result-answer">B) <strong>São Paulo</strong> · destaque #3 do time</div>
-    </div>
-
     <div class="result-row">
       <div class="result-dot blue"></div>
-      <div class="result-label">P5 — Árbitro com Ação temerária em #1</div>
-      <div class="result-answer">B) <strong>Bruno Arleu</strong> · também lidera em Jogo brusco grave</div>
+      <div class="result-label">P3 — Gesto / linguagem ofensiva</div>
+      <div class="result-answer">A) <strong>Palmeiras</strong> · 13</div>
     </div>
-
-  </div>
-
-  <div class="card amber" style="flex: 0 0 auto;">
-    <h3>De onde vieram esses dados?</h3>
-    <p>5.681 súmulas CBF processadas com NLP — o computador leu os motivos escritos pelos árbitros, agrupou frases com o mesmo significado e revelou esses padrões automaticamente.</p>
+    <div class="result-row">
+      <div class="result-dot amber"></div>
+      <div class="result-label">P4 — Protesto contra a arbitragem</div>
+      <div class="result-answer">D) <strong>São Paulo</strong> · 183</div>
+    </div>
+    <div class="result-row">
+      <div class="result-dot amber"></div>
+      <div class="result-label">P5 — Falta tática</div>
+      <div class="result-answer">D) <strong>Palmeiras</strong> · 128</div>
+    </div>
+    <div class="result-row">
+      <div class="result-dot red"></div>
+      <div class="result-label">P6 — Jogo brusco grave</div>
+      <div class="result-answer">B) <strong>Sport Recife</strong> · 12</div>
+    </div>
+    <div class="result-row">
+      <div class="result-dot blue"></div>
+      <div class="result-label">P7 — Conduta violenta</div>
+      <div class="result-answer">A) <strong>Athletico Paranaense</strong> · 15</div>
+    </div>
+    <div class="result-row">
+      <div class="result-dot amber"></div>
+      <div class="result-label">P8 — Impedir oportunidade de gol</div>
+      <div class="result-answer">D) <strong>América Mineiro</strong> · 9</div>
+    </div>
+    <div class="result-row">
+      <div class="result-dot red"></div>
+      <div class="result-label">P9 · Árbitro com mais VAR</div>
+      <div class="result-answer">B) <strong>Braulio da Silva</strong> · 131 jogos</div>
+    </div>
+    <div class="result-row">
+      <div class="result-dot green"></div>
+      <div class="result-label">P10 · Time com mais VAR</div>
+      <div class="result-answer">C) <strong>Palmeiras</strong> · 184 jogos</div>
+    </div>
   </div>
 </section>
 
 
-<!-- ================================================ -->
-<!-- CLOSING                                          -->
-<!-- ================================================ -->
+<!-- ================================================================ -->
+<!-- CLOSING                                                           -->
+<!-- ================================================================ -->
 <section class="slide-closing">
   <div>
-    <div class="kicker" style="text-align:center; font-size:1em; margin-bottom:18px;">Ciência de Dados aplicada ao futebol</div>
+    <div class="kicker" style="font-size:1em; margin-bottom:18px;">Ciência de Dados aplicada ao futebol</div>
     <h1>Padrões que seriam invisíveis lendo cartão por cartão</h1>
-    <p class="subtitle" style="max-width:680px; margin: 18px auto 0;">
-      O computador processou <strong>25.838 cartões</strong>, encontrou <strong>18 tipos de falta</strong> e revelou o perfil disciplinar de cada time e árbitro — em segundos.
+    <p style="max-width:660px; margin:18px auto 0; font-size:0.92em; color:var(--muted); line-height:1.5;">
+      O computador processou <strong>25.838 cartões</strong> e <strong>5.681 súmulas</strong>,
+      encontrou <strong>18 tipos de falta</strong> e revelou o perfil de cada time e árbitro — automaticamente.
     </p>
-    <div class="closing-grid" style="grid-template-columns: repeat(3, 1fr);">
+    <div class="closing-grid">
       <div class="card green">
         <h3>Times</h3>
-        <p>Cada time tem um "estilo" de cartão que os dados revelam claramente — de Flamengo com entradas duras a Palmeiras com discussões.</p>
+        <p>Cada clube tem um perfil próprio — Bragantino em volume, Fluminense em entradas duras, Palmeiras apareceu 3 vezes no quiz.</p>
       </div>
       <div class="card amber">
         <h3>Árbitros</h3>
-        <p>Árbitros também têm padrões: alguns marcam mais confronto físico, outros mais linguagem ofensiva. O estilo de apitar fica registrado.</p>
+        <p>Braulio da Silva liderou o VAR com 131 jogos. Cada árbitro tem um estilo diferente de leitura do jogo.</p>
       </div>
       <div class="card blue">
         <h3>7 anos de dados</h3>
-        <p>Série A, Série B e Copa do Brasil de 2020 a 2026 — base suficiente para detectar tendências reais, não coincidências.</p>
+        <p>Série A, Série B e Copa do Brasil 2020–2026 — base suficiente para revelar tendências reais, não coincidências.</p>
       </div>
     </div>
   </div>
@@ -804,16 +790,15 @@
     pdfSeparateFragments: false
   });
 
-  /* Reveal/hide the correct answer visually when the fragment fires */
-  Reveal.on('fragmentshown', function(event) {
-    if (event.fragment.dataset.answer) {
-      event.fragment.closest('section').classList.add('revealed');
+  Reveal.on('fragmentshown', function(e) {
+    if (e.fragment.dataset.answer) {
+      e.fragment.closest('section').classList.add('revealed');
     }
   });
 
-  Reveal.on('fragmenthidden', function(event) {
-    if (event.fragment.dataset.answer) {
-      event.fragment.closest('section').classList.remove('revealed');
+  Reveal.on('fragmenthidden', function(e) {
+    if (e.fragment.dataset.answer) {
+      e.fragment.closest('section').classList.remove('revealed');
     }
   });
 </script>
