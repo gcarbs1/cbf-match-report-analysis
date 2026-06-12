@@ -832,6 +832,7 @@
 <div class="reveal">
 <div class="slides">
 
+<!-- 01 · CAPA -->
 <section class="slide-title">
   <div>
     <div class="kicker">Projeto de NLP em documentos esportivos</div>
@@ -853,7 +854,6 @@
       <circle class="pitch-mark" cx="94" cy="34" r="0.75"/>
       <path class="pitch-arc" d="M16.47 26.68 A9.15 9.15 0 0 1 16.47 41.32"/>
       <path class="pitch-arc" d="M88.53 41.32 A9.15 9.15 0 0 1 88.53 26.68"/>
-
       <circle class="pitch-player team-a" cx="7.5"  cy="34"   r="1.85"/>
       <circle class="pitch-player team-a" cx="18.5" cy="11.5" r="1.85"/>
       <circle class="pitch-player team-a" cx="22"   cy="24"   r="1.85"/>
@@ -865,7 +865,6 @@
       <circle class="pitch-player team-a" cx="39"   cy="55"   r="1.85"/>
       <circle class="pitch-player team-a" cx="61.5" cy="26.5" r="1.85"/>
       <circle class="pitch-player team-a" cx="67"   cy="44"   r="1.85"/>
-
       <circle class="pitch-player team-b" cx="97"   cy="34"   r="1.85"/>
       <circle class="pitch-player team-b" cx="85.5" cy="56"   r="1.85"/>
       <circle class="pitch-player team-b" cx="81.5" cy="44.5" r="1.85"/>
@@ -881,37 +880,7 @@
   </div>
 </section>
 
-<section class="slide">
-  <div class="header">
-    <div>
-      <div class="kicker">Cronologia do projeto</div>
-      <h2>Fluxo dos notebooks</h2>
-    </div>
-  </div>
-  <div class="notebook-flow" style="grid-template-columns: repeat(2, minmax(0, 1fr));">
-    <div class="step">
-      <div class="idx">0</div>
-      <h3>Coleta das súmulas</h3>
-      <p>Descoberta dos IDs de competição, coleta de metadados e download dos PDFs da CBF.</p>
-    </div>
-    <div class="step">
-      <div class="idx">1</div>
-      <h3>Limpeza e parsing</h3>
-      <p>Extração com pdfplumber, regex para cartões e motivos de acréscimos, normalização textual.</p>
-    </div>
-    <div class="step">
-      <div class="idx">2</div>
-      <h3>Embeddings e BERTopic</h3>
-      <p>EDA, grid search, duas passagens de BERTopic, fine-tuning, rotulagem e análise de VAR.</p>
-    </div>
-    <div class="step">
-      <div class="idx">3</div>
-      <h3>Baseline LLM</h3>
-      <p>Classificação zero-shot via Ollama e comparação contra o método final por coesão semântica.</p>
-    </div>
-  </div>
-</section>
-
+<!-- 02 · PROBLEMA -->
 <section class="slide">
   <div class="header">
     <div>
@@ -923,140 +892,68 @@
     <div class="stack">
       <div class="card blue">
         <h3>Por que o problema é difícil?</h3>
-        <p>A súmula registra a justificativa do cartão em linguagem natural. A mesma infração pode aparecer com redações diferentes, graus de detalhe diferentes e termos próprios de cada árbitro.</p>
+        <p>A súmula registra a justificativa do cartão em linguagem natural. A mesma infração aparece com redações, graus de detalhe e termos próprios de cada árbitro.</p>
       </div>
       <div class="card red">
         <h3>Mesma infração, redações distintas</h3>
-        <p>Os três exemplos ao lado apontam para o mesmo comportamento: <strong>Protesto contra a arbitragem</strong>. A solução precisa capturar significado, não apenas palavras isoladas.</p>
+        <p>Os três exemplos ao lado descrevem o mesmo comportamento: <strong>Protesto contra a arbitragem</strong>. A solução precisa capturar significado, não apenas palavras isoladas.</p>
+      </div>
+      <div class="card green">
+        <h3>Objetivo</h3>
+        <p>Classificar automaticamente os motivos de cartão e usar esses rótulos para analisar padrões disciplinares por temporada, time e árbitro.</p>
       </div>
     </div>
     <div class="stack">
-      <div class="card green">
-        <h3>Objetivo do projeto</h3>
-        <p>Classificar automaticamente os motivos de cartão e usar esses rótulos para analisar padrões disciplinares por temporada, time e árbitro.</p>
-      </div>
-      <div class="quote">"Por reclamar ostensivamente com palavras e gestos."</div>
-      <div class="quote">"Por protestar contra decisão da arbitragem de forma acintosa."</div>
-      <div class="quote">"Por questionar reiteradamente as decisões da arbitragem."</div>
+      <div class="quote" style="border-left-color: var(--amber);">"Por reclamar ostensivamente com palavras e gestos."</div>
+      <div class="quote" style="border-left-color: var(--amber);">"Por protestar contra decisão da arbitragem de forma acintosa."</div>
+      <div class="quote" style="border-left-color: var(--amber);">"Por questionar reiteradamente as decisões da arbitragem."</div>
     </div>
-  </div>
-  <div class="card amber" style="flex: 0 0 auto;">
-    <div style="color: var(--amber); font-size: 0.68em; font-weight: 800; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.04em;">Estudo adicional</div>
-    <h3>Além dos cartões</h3>
-    <p>Nos motivos de atraso e acréscimos, detectar menções ao VAR para acompanhar sua presença nas súmulas ao longo do tempo.</p>
   </div>
 </section>
 
+<!-- 03 · DADOS -->
 <section class="slide">
   <div class="header">
     <div>
-      <div class="kicker">Notebook 0</div>
-      <h2>Base e coleta das súmulas CBF</h2>
+      <div class="kicker">Coleta e extração</div>
+      <h2>Base de dados: 5.681 súmulas, 2020–2026</h2>
     </div>
   </div>
-  <div class="metrics three">
-    <div class="metric"><div class="num">5.681</div><div class="label">súmulas indexadas no conjunto processado</div></div>
-    <div class="metric"><div class="num">3</div><div class="label">competições: Série A, Série B e Copa do Brasil</div></div>
-    <div class="metric"><div class="num">2020-26</div><div class="label">janela temporal, com 2026 ainda parcial</div></div>
+  <div class="metrics" style="grid-template-columns: repeat(4, minmax(0, 1fr));">
+    <div class="metric"><div class="num">5.681</div><div class="label">súmulas · Série A, B e Copa do Brasil</div></div>
+    <div class="metric"><div class="num">25.838</div><div class="label">cartões extraídos (amarelos + vermelhos)</div></div>
+    <div class="metric"><div class="num" style="color: var(--amber);">6.945</div><div class="label">justificativas únicas para modelagem</div></div>
+    <div class="metric"><div class="num" style="color: var(--green);">18</div><div class="label">grupos semânticos na taxonomia final</div></div>
   </div>
   <div class="scrape-flow">
     <div class="scrape-step">
-      <h3>1. IDs das competições</h3>
-      <p>Série A parte de IDs conhecidos. Série B e Copa do Brasil são descobertas por busca no site da CBF.</p>
+      <h3>IDs e rodadas</h3>
+      <p>Descoberta automática de competições e percurso de todas as rodadas e fases via API da CBF.</p>
     </div>
     <div class="scrape-arrow">&rarr;</div>
     <div class="scrape-step">
-      <h3>2. Rodadas e fases</h3>
-      <p>Para cada competição e ano, o notebook percorre rodadas ou fases eliminatórias e lista os jogos disponíveis.</p>
+      <h3>Download dos PDFs</h3>
+      <p>Somente súmulas são baixadas, com retry, cache local e metadados normalizados em CSV.</p>
     </div>
     <div class="scrape-arrow">&rarr;</div>
     <div class="scrape-step">
-      <h3>3. Metadados</h3>
-      <p>Data, rodada, equipes, identificador do jogo e links dos documentos são normalizados em uma tabela de controle.</p>
+      <h3>Extração por regex</h3>
+      <p>pdfplumber + regex extraem minuto, tipo, equipe e justificativa de cada cartão.</p>
     </div>
     <div class="scrape-arrow">&rarr;</div>
     <div class="scrape-step">
-      <h3>4. Download dos PDFs</h3>
-      <p>Somente documentos de súmula são baixados, com retry, cache local e caminho persistido para auditoria posterior.</p>
+      <h3>Normalização</h3>
+      <p>Duplas advertências reclassificadas como amarelo. Textos deduplicados para modelagem.</p>
     </div>
   </div>
 </section>
 
+<!-- 04 · TAXONOMIA -->
 <section class="slide">
   <div class="header">
     <div>
-      <div class="kicker">Notebook 1</div>
-      <h2>Limpeza e extração dos campos úteis</h2>
-    </div>
-  </div>
-  <div class="metrics three">
-    <div class="metric"><div class="num">25.838</div><div class="label">cartões processados</div></div>
-    <div class="metric"><div class="num">6.945</div><div class="label">textos únicos usados na modelagem semântica</div></div>
-    <div class="metric"><div class="num">2.035</div><div class="label">partidas com sinal textual de VAR</div></div>
-  </div>
-  <div class="pipeline-grid" style="grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(3, minmax(0, 1fr));">
-    <div class="pipeline-step blue">
-      <div class="pipeline-num">1</div>
-      <h3>PDF para texto</h3>
-      <p>pdfplumber concatena todas as páginas da súmula em uma string por partida.</p>
-    </div>
-    <div class="pipeline-step blue">
-      <div class="pipeline-num">2</div>
-      <h3>Times e árbitro</h3>
-      <p>Matching normalizado resolve variações de escrita entre o índice e o PDF.</p>
-    </div>
-    <div class="pipeline-step red">
-      <div class="pipeline-num">3</div>
-      <h3>Motivos de cartão</h3>
-      <p>Regex extrai minuto, tipo, equipe e justificativa de cada cartão amarelo e vermelho.</p>
-    </div>
-    <div class="pipeline-step amber">
-      <div class="pipeline-num">4</div>
-      <h3>Motivos de acréscimos</h3>
-      <p>Seção de atrasos e acréscimos extraída como campo textual livre por partida.</p>
-    </div>
-    <div class="pipeline-step red">
-      <div class="pipeline-num">5</div>
-      <h3>Dupla advertência</h3>
-      <p>Texto processual da expulsão é limpo. O evento entra como amarelo para análise disciplinar.</p>
-    </div>
-    <div class="pipeline-step amber">
-      <div class="pipeline-num">6</div>
-      <h3>Sinal de VAR</h3>
-      <p>Termos como <em>VAR</em> e <em>checagem</em> identificam menções ao protocolo de vídeo nos acréscimos.</p>
-    </div>
-  </div>
-</section>
-
-<section class="slide">
-  <div class="header">
-    <div>
-      <div class="kicker">Notebook 1 e EDA</div>
-      <h2>Cartões extraídos por ano e tipo</h2>
-    </div>
-  </div>
-  <div class="plot-frame flush">
-    <img src="viz/cards_by_year_type.png" alt="Distribuição de cartões por ano e tipo">
-  </div>
-</section>
-
-<section class="slide">
-  <div class="header">
-    <div>
-      <div class="kicker">EDA textual</div>
-      <h2>Justificativas mais frequentes</h2>
-    </div>
-  </div>
-  <div class="plot-frame flush">
-    <img src="viz/top_card_reason_texts.png" alt="Textos de justificativa de cartão mais frequentes">
-  </div>
-</section>
-
-<section class="slide">
-  <div class="header">
-    <div>
-      <div class="kicker">Proposta de classificação</div>
-      <h2>Taxonomia de 18 grupos semânticos</h2>
+      <div class="kicker">Taxonomia de destino</div>
+      <h2>18 grupos semânticos baseados nas Leis do Jogo</h2>
     </div>
   </div>
   <div class="content-grid left-wide">
@@ -1082,33 +979,34 @@
     </div>
     <div class="stack">
       <div class="card blue">
-        <h3>Infrações das Leis do Jogo</h3>
-        <p>Cada grupo corresponde a uma categoria disciplinar das Leis do Jogo da FIFA. As mesmas categorias para as quais árbitros brasileiros são treinados a lavrar a súmula.</p>
+        <h3>Infrações das Leis do Jogo da FIFA</h3>
+        <p>Cada grupo corresponde a uma categoria disciplinar para a qual árbitros brasileiros são treinados a lavrar a súmula. A taxonomia é o alvo de ambas as soluções comparadas.</p>
       </div>
     </div>
   </div>
 </section>
 
+<!-- 05 · BASELINE: LLM ZERO-SHOT -->
 <section class="slide">
   <div class="header">
     <div>
-      <div class="kicker">Notebook 3</div>
-      <h2>Baseline: LLM zero-shot via Ollama</h2>
+      <div class="kicker">Solução baseline</div>
+      <h2>LLM zero-shot via Ollama</h2>
     </div>
   </div>
   <div class="content-grid two-col">
     <div class="stack">
       <div class="card red">
-        <h3>O que é a baseline</h3>
+        <h3>Abordagem</h3>
         <p>A LLM recebe apenas o texto da justificativa e os nomes dos 18 grupos. Sem exemplos, sem regras manuais, sem fine-tuning. Temperatura 0 para resposta determinística.</p>
       </div>
       <div class="card blue">
         <h3>Configuração</h3>
         <ul>
           <li>Modelo: <code>llama3.2:3b</code> via Ollama local</li>
-          <li>Temperatura 0 e máximo de 30 tokens na resposta</li>
-          <li>Resultado cacheado em CSV para retomar sem reclassificar</li>
-          <li>184 de 6.945 textos retornaram resposta não parseável</li>
+          <li>Temperatura 0 · máximo de 30 tokens na resposta</li>
+          <li>Resultado cacheado em CSV para reprodutibilidade</li>
+          <li>184 de 6.945 textos retornaram resposta não parseável (2,7%)</li>
         </ul>
       </div>
     </div>
@@ -1125,64 +1023,50 @@
   </div>
 </section>
 
+<!-- 06 · SOLUÇÃO PROPOSTA: PIPELINE -->
 <section class="slide">
   <div class="header">
     <div>
-      <div class="kicker">Notebook 2</div>
-      <h2>Melhoria: BERTopic com fine-tuning</h2>
+      <div class="kicker">Solução proposta</div>
+      <h2>BERTopic em duas passagens com fine-tuning contrastivo</h2>
     </div>
   </div>
-  <div class="pipeline-grid">
-    <div class="pipeline-step blue">
-      <div class="pipeline-num">1</div>
-      <h3>Embeddings base</h3>
-      <p>Gerar vetores para as justificativas únicas com o modelo E5 multilingual.</p>
+  <div class="content-grid two-col">
+    <div class="stack">
+      <div class="card blue">
+        <h3>Abordagem</h3>
+        <p>Agrupar as justificativas por semântica usando embeddings especializados em português. O encoder é fine-tunado com pares contrastivos extraídos da própria primeira clusterização, depois uma segunda passagem gera os grupos finais.</p>
+      </div>
+      <div class="card green">
+        <h3>Configuração</h3>
+        <ul>
+          <li>Encoder: <code>multilingual-e5-large</code> (Sentence Transformers)</li>
+          <li>Redução de dimensão: UMAP · clusterização: HDBSCAN</li>
+          <li>Fine-tuning: MultipleNegativesRankingLoss · 1 epoch</li>
+          <li>79 clusters revisados → 18 grupos · 504 outliers por cosseno</li>
+        </ul>
+      </div>
     </div>
-    <div class="pipeline-step red">
-      <div class="pipeline-num">2</div>
-      <h3>Grid search</h3>
-      <p><code>n_neighbors</code> e <code>min_topic_size</code> selecionados por DBCV no espaço UMAP.</p>
-    </div>
-    <div class="pipeline-step amber">
-      <div class="pipeline-num">3</div>
-      <h3>BERTopic P1</h3>
-      <p>Clusters exploratórios geram pares positivos para treino contrastivo.</p>
-    </div>
-    <div class="pipeline-step blue">
-      <div class="pipeline-num">4</div>
-      <h3>Fine-tuning</h3>
-      <p>MultipleNegativesRankingLoss, 1 epoch, pares sintéticos por cluster.</p>
-    </div>
-    <div class="pipeline-step red">
-      <div class="pipeline-num">5</div>
-      <h3>BERTopic P2</h3>
-      <p>Nova clusterização com embeddings fine-tunados, menos outliers e melhor separação.</p>
-    </div>
-    <div class="pipeline-step amber">
-      <div class="pipeline-num">6</div>
-      <h3>Rotulagem manual</h3>
-      <p>79 clusters revisados e mapeados para 18 grupos. Outliers atribuídos por similaridade cosseno.</p>
+    <div class="card amber" style="display: flex; flex-direction: column;">
+      <h3>Pipeline em 6 passos</h3>
+      <div style="margin-top: 12px; font-size: 0.84em; line-height: 1.7; flex: 1;">
+        <p style="color: var(--black);">① <strong>Embeddings base</strong> — vetores com <code>multilingual-e5-large</code></p>
+        <p style="color: var(--black); margin-top: 6px;">② <strong>Grid search</strong> — DBCV otimiza <code>n_neighbors</code> e <code>min_topic_size</code></p>
+        <p style="color: var(--black); margin-top: 6px;">③ <strong>BERTopic P1</strong> — clusters exploratórios geram pares positivos</p>
+        <p style="color: var(--black); margin-top: 6px;">④ <strong>Fine-tuning</strong> — encoder retreinado com pares sintéticos por cluster</p>
+        <p style="color: var(--black); margin-top: 6px;">⑤ <strong>BERTopic P2</strong> — reclusterização com embeddings aprimorados</p>
+        <p style="color: var(--black); margin-top: 6px;">⑥ <strong>Rotulagem manual</strong> — 79 clusters → 18 grupos da taxonomia</p>
+      </div>
     </div>
   </div>
 </section>
 
-<section class="slide">
-  <div class="header">
-    <div>
-      <div class="kicker">Seleção de hiperparâmetros</div>
-      <h2>Grid search UMAP + HDBSCAN</h2>
-    </div>
-  </div>
-  <div class="plot-frame flush">
-    <img src="viz/umap_param_grid_search_base.png" alt="Grid search de parâmetros UMAP e HDBSCAN">
-  </div>
-</section>
-
+<!-- 07 · ABLAÇÃO -->
 <section class="slide">
   <div class="header">
     <div>
       <div class="kicker">Ablação</div>
-      <h2>Impacto do fine-tuning</h2>
+      <h2>Impacto do fine-tuning nos embeddings</h2>
     </div>
   </div>
   <div class="plot-frame flush">
@@ -1190,18 +1074,18 @@
   </div>
 </section>
 
-
+<!-- 09 · ROTULAGEM -->
 <section class="slide">
   <div class="header">
     <div>
-      <div class="kicker">Mapeamento dos clusters</div>
-      <h2>Como os clusters foram mapeados para grupos</h2>
+      <div class="kicker">Rotulagem dos clusters</div>
+      <h2>De 79 clusters a 18 grupos interpretáveis</h2>
     </div>
   </div>
   <div class="content-grid two-col">
     <div class="card blue">
-      <h3>Mapeamento dos clusters</h3>
-      <p>Os 79 clusters do BERTopic P2 foram revisados um a um. Cada cluster recebeu um rótulo da taxonomia com base nos textos mais representativos e nas palavras-chave c-TF-IDF do próprio cluster.</p>
+      <h3>Mapeamento cluster → grupo</h3>
+      <p>Cada cluster foi revisado manualmente pelos textos mais representativos e pelas palavras-chave c-TF-IDF geradas pelo BERTopic.</p>
       <div style="margin-top: 14px; background: var(--bg); border-radius: 6px; padding: 12px 14px; font-size: 0.72em; line-height: 1.5;">
         <div style="color: var(--muted); font-weight: 700; margin-bottom: 6px;">Cluster 15 · 933 eventos</div>
         <div style="color: var(--muted); margin-bottom: 4px;">Termos: <em>retardar, reinício, cobrança falta</em></div>
@@ -1211,10 +1095,19 @@
           <span style="background: var(--blue); color: var(--white); border-radius: 999px; padding: 2px 10px; font-weight: 800;">Retardar reinício do jogo</span>
         </div>
       </div>
+      <div style="margin-top: 10px; background: var(--bg); border-radius: 6px; padding: 12px 14px; font-size: 0.72em; line-height: 1.5;">
+        <div style="color: var(--muted); font-weight: 700; margin-bottom: 6px;">Cluster 3 · 382 eventos</div>
+        <div style="color: var(--muted); margin-bottom: 4px;">Termos: <em>protestar, reclamar, arbitragem</em></div>
+        <div style="color: var(--black); margin-bottom: 8px;">"Por protestar veementemente contra as decisões da arbitragem."</div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="color: var(--muted);">→</span>
+          <span style="background: var(--blue); color: var(--white); border-radius: 999px; padding: 2px 10px; font-weight: 800;">Protesto contra a arbitragem</span>
+        </div>
+      </div>
     </div>
     <div class="card red">
       <h3>Tratamento de outliers</h3>
-      <p>504 textos únicos sem cluster denso (label <code>-1</code> no HDBSCAN) foram atribuídos ao grupo mais próximo por similaridade cosseno e confirmados por leitura humana.</p>
+      <p>504 textos sem cluster denso (label <code>-1</code> no HDBSCAN) foram atribuídos ao grupo mais próximo por similaridade cosseno.</p>
       <div style="margin-top: 14px; background: var(--bg); border-radius: 6px; padding: 12px 14px; font-size: 0.72em; line-height: 1.5;">
         <div style="color: var(--muted); font-weight: 700; margin-bottom: 6px;">HDBSCAN label <code>-1</code></div>
         <div style="color: var(--black); margin-bottom: 8px;">"Não respeitar a distância regulamentar em um tiro livre."</div>
@@ -1223,14 +1116,23 @@
           <span style="background: var(--red); color: var(--white); border-radius: 999px; padding: 2px 10px; font-weight: 800;">Não respeitar distância regulamentar</span>
         </div>
       </div>
+      <div style="margin-top: 10px; background: var(--bg); border-radius: 6px; padding: 12px 14px; font-size: 0.72em; line-height: 1.5;">
+        <div style="color: var(--muted); font-weight: 700; margin-bottom: 6px;">HDBSCAN label <code>-1</code></div>
+        <div style="color: var(--black); margin-bottom: 8px;">"Por entrar no campo de jogo sem autorização do árbitro."</div>
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+          <span style="color: var(--muted);">cosseno 0.97 →</span>
+          <span style="background: var(--red); color: var(--white); border-radius: 999px; padding: 2px 10px; font-weight: 800;">Entrar ou sair do campo sem autorização</span>
+        </div>
+      </div>
     </div>
   </div>
 </section>
 
+<!-- 10 · RESULTADO FINAL: DISTRIBUIÇÃO -->
 <section class="slide">
   <div class="header">
     <div>
-      <div class="kicker">Resultado geral</div>
+      <div class="kicker">Resultado final</div>
       <h2>Distribuição dos grupos de cartão</h2>
     </div>
   </div>
@@ -1239,30 +1141,12 @@
   </div>
 </section>
 
+<!-- 11 · REPRESENTATIVIDADE -->
 <section class="slide">
   <div class="header">
     <div>
-      <div class="kicker">Score de representatividade</div>
-      <h2>Como foi construído o score de representatividade</h2>
-    </div>
-  </div>
-  <div class="content-grid two-col">
-    <div class="card green">
-      <h3>Score de representatividade</h3>
-      <p>Para cada grupo calcula-se o centroide ponderado pelo número de eventos no espaço do modelo fine-tunado. O <strong>score_mean</strong> é a similaridade cosseno média de todos os textos do grupo ao seu centroide. Quanto maior, mais coeso o grupo.</p>
-    </div>
-    <div class="card amber">
-      <h3>Interpretação do score</h3>
-      <p>Grupos com <strong>score_mean &gt; 0.85</strong> têm alta coesão (Simulação, Protesto, Jogo brusco). Grupos com score menor são semanticamente mais amplos, como Ação temerária (0.58), que abrange entradas de diferentes intensidades.</p>
-    </div>
-  </div>
-</section>
-
-<section class="slide">
-  <div class="header">
-    <div>
-      <div class="kicker">Auditoria do método</div>
-      <h2>Representatividade dos grupos</h2>
+      <div class="kicker">Auditoria interna</div>
+      <h2>Representatividade dos grupos (coesão cosseno)</h2>
     </div>
   </div>
   <div class="plot-frame flush">
@@ -1270,11 +1154,12 @@
   </div>
 </section>
 
+<!-- 12 · COMPARAÇÃO: COESÃO SEMÂNTICA -->
 <section class="slide">
   <div class="header">
     <div>
-      <div class="kicker">Comparação de métodos</div>
-      <h2>Coesão semântica por grupo: BERTopic + fine-tuning vs. LLM zero-shot</h2>
+      <div class="kicker">Comparação de métodos · coesão semântica</div>
+      <h2>BERTopic + fine-tuning vs. LLM zero-shot por grupo</h2>
     </div>
   </div>
   <div class="plot-frame flush">
@@ -1282,106 +1167,37 @@
   </div>
 </section>
 
+<!-- 13 · COMPARAÇÃO: RECUPERABILIDADE -->
 <section class="slide">
   <div class="header">
     <div>
-      <div class="kicker">Análise temporal</div>
-      <h2>Evolução dos grupos por temporada</h2>
+      <div class="kicker">Comparação de métodos · recuperabilidade</div>
+      <h2>Quão bem um classificador aprende os rótulos de cada método?</h2>
+    </div>
+  </div>
+  <div class="content-grid two-col" style="flex: 0 0 auto;">
+    <div class="card blue">
+      <h3>BERTopic + fine-tuning (SVM)</h3>
+      <ul>
+        <li>Accuracy: <strong>93,3%</strong></li>
+        <li>F1 Macro: <strong>88,2%</strong></li>
+        <li>F1 Weighted: <strong>93,2%</strong></li>
+      </ul>
+    </div>
+    <div class="card green">
+      <h3>LLM zero-shot (SVM)</h3>
+      <ul>
+        <li>Accuracy: <strong>77,1%</strong></li>
+        <li>F1 Macro: <strong>65,2%</strong></li>
+        <li>F1 Weighted: <strong>76,1%</strong></li>
+      </ul>
     </div>
   </div>
   <div class="plot-frame flush">
-    <img src="viz/card_reason_groups_proportions_by_year.png" alt="Proporção de grupos de cartão por ano">
+    <img src="viz/retrieval_nb2_vs_nb3_comparison.png" alt="Comparação de accuracy e F1 entre BERTopic e LLM">
   </div>
 </section>
 
-<section class="slide">
-  <div class="header">
-    <div>
-      <div class="kicker">Análise por equipe</div>
-      <h2>Perfil disciplinar por time</h2>
-    </div>
-  </div>
-  <div class="plot-frame flush">
-    <img src="viz/card_reason_groups_by_team.png" alt="Distribuição de grupos de cartão por time">
-  </div>
-</section>
-
-<section class="slide">
-  <div class="header">
-    <div>
-      <div class="kicker">Análise por arbitragem</div>
-      <h2>Padrões de marcação por árbitro</h2>
-    </div>
-  </div>
-  <div class="plot-frame flush">
-    <img src="viz/card_reason_groups_by_referee.png" alt="Distribuição de grupos de cartão por árbitro">
-  </div>
-</section>
-
-<section class="slide">
-  <div class="header">
-    <div>
-      <div class="kicker">Acréscimos e atrasos</div>
-      <h2>Menções ao VAR por temporada</h2>
-    </div>
-  </div>
-  <div class="content-grid right-wide">
-    <div class="stack">
-      <div class="card blue">
-        <h3>Detecção lexical</h3>
-        <p>Nos motivos de acréscimos, termos como <strong>VAR</strong> e <strong>checagem</strong> indicam menção ao protocolo de vídeo.</p>
-      </div>
-      <div class="card green">
-        <h3>Resultado agregado</h3>
-        <p>Foram identificados sinais de VAR em <strong>2.035 de 5.681 partidas</strong>, cerca de <strong>35,8%</strong> da base.</p>
-      </div>
-      <div class="card amber">
-        <h3>Leitura</h3>
-        <p>O pico aparece em 2021. A queda de 2026 deve ser lida com cautela porque a temporada está incompleta.</p>
-      </div>
-    </div>
-    <div class="plot-frame flush">
-      <img src="viz/var_mentions_by_year.png" alt="Menções ao VAR por ano">
-    </div>
-  </div>
-</section>
-
-<section class="slide">
-  <div class="header">
-    <div>
-      <div class="kicker">Acréscimos e atrasos</div>
-      <h2>VAR por time e por árbitro</h2>
-    </div>
-  </div>
-  <div class="content-grid two-col">
-    <div class="plot-frame flush">
-      <img src="viz/var_mentions_by_team.png" alt="Menções ao VAR por time">
-    </div>
-    <div class="plot-frame flush">
-      <img src="viz/var_mentions_by_referee.png" alt="Menções ao VAR por árbitro">
-    </div>
-  </div>
-</section>
-
-<section class="slide-closing">
-  <div>
-    <h1 style="text-align: center;">Conclusões e próximos passos</h1>
-    <div class="closing-grid">
-      <div class="card green">
-        <h3>Funcionou</h3>
-        <p>O pipeline BERTopic em duas passagens melhorou a separação dos clusters, reduziu outliers e gerou grupos interpretáveis.</p>
-      </div>
-      <div class="card amber">
-        <h3>Limitações</h3>
-        <p>Alguns grupos são semanticamente próximos ou amplos, especialmente conduta antidesportiva, confronto físico e ação temerária.</p>
-      </div>
-      <div class="card blue">
-        <h3>Extensões</h3>
-        <p>Treinar um classificador supervisionado com os rótulos finais e aprofundar análises longitudinais por árbitro, equipe e competição.</p>
-      </div>
-    </div>
-  </div>
-</section>
 
 </div>
 </div>
