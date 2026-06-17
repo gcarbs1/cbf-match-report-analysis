@@ -1,7 +1,7 @@
 \documentclass[
 12pt,
 openany,
-twoside,
+oneside,
 a4paper,
 chapter=TITLE,
 english,
@@ -85,7 +85,7 @@ brazil
   pdfauthor={\@author},
   pdfsubject={\imprimirpreambulo},
   pdfcreator={LaTeX with abnTeX2},
-  pdfkeywords={NLP}{BERTopic}{embeddings}{fine-tuning}{futebol}{cartões}{VAR},
+  pdfkeywords={NLP}{BERTopic}{embeddings}{fine-tuning}{futebol}{cartões},
   colorlinks=true,
   linkcolor=black,
   citecolor=black,
@@ -112,9 +112,7 @@ brazil
 
 As súmulas oficiais das competições organizadas pela Confederação Brasileira de Futebol registram as justificativas dos cartões disciplinares aplicados pelos árbitros em linguagem livre, sem padronização lexical obrigatória. Expressões como ``calçar o adversário de forma temerária'', ``ato desleal'' ou ``reclamação contra as decisões da arbitragem'' podem descrever a mesma infração com vocabulário diferente dependendo do árbitro e da temporada. Essa heterogeneidade dificulta qualquer análise sistemática em larga escala.
 
-O objetivo deste trabalho é desenvolver e avaliar um pipeline de processamento de linguagem natural que organize automaticamente esses textos em categorias semânticas coerentes com as Leis do Jogo da IFAB \cite{ifab2024laws}, sem supervisão humana durante o agrupamento inicial. Para isso, combinamos embeddings do modelo \textit{multilingual-e5-large} \cite{wang2022text}, clustering com BERTopic \cite{grootendorst2022bertopic} em duas passagens e fine-tuning contrastivo. O resultado é uma taxonomia de 18 grupos disciplinares aplicada a 5.681 súmulas de três competições nacionais, Série A, Série B e Copa do Brasil, cobrindo o período de 2020 a 2026.
-
-Como análise complementar, detectamos menções textuais ao VAR nos motivos de acréscimos registrados pelos árbitros, mapeando a presença do sistema de revisão por vídeo ao longo do período.
+O objetivo deste trabalho é desenvolver e avaliar um pipeline de processamento de linguagem natural que organize automaticamente esses textos em categorias semânticas coerentes com as Leis do Jogo da IFAB \cite{ifab2024laws}. Para isso, combinamos embeddings do modelo \textit{multilingual-e5-large} \cite{wang2022text}, clustering com BERTopic \cite{grootendorst2022bertopic} em duas passagens e fine-tuning contrastivo. Na passagem final, o BERTopic produziu 79 clusters, cujas palavras mais representativas foram analisadas manualmente para consolidar os grupos em uma taxonomia de 18 categorias disciplinares alinhadas com as Leis do Jogo da IFAB. Essa taxonomia foi aplicada a 5.681 súmulas de três competições nacionais, Série A, Série B e Copa do Brasil, cobrindo o período de 2020 a 2026.
 
 O relatório está organizado em quatro capítulos. O Capítulo~2 descreve a coleta dos dados, a limpeza das súmulas e o pipeline NLP completo. O Capítulo~3 apresenta os resultados da exploração, da ablação de modelos, da taxonomia final e da comparação entre métodos. O Capítulo~4 discute as conclusões, limitações e possíveis extensões.
 
@@ -124,7 +122,7 @@ O relatório está organizado em quatro capítulos. O Capítulo~2 descreve a col
 
 \section{Coleta de Dados}
 
-As súmulas são publicadas pela CBF em formato PDF \cite{cbf2024sumulas}. A coleta foi realizada no Notebook~0 por dois mecanismos. Para a Série A e a Série B, a API pública da CBF retorna metadados e links de documentos de cada rodada em formato JSON. Os IDs de competição da Série A são conhecidos e fixos por ano. Os da Série B são descobertos automaticamente por busca em torno do ID da Série A, validando que o candidato possui ao menos oito jogos nas rodadas 1 e 38. Para a Copa do Brasil, os IDs de fase são extraídos da página de tabela por expressão regular.
+As súmulas são publicadas pela CBF em formato PDF \cite{cbf2024sumulas}. A coleta foi realizada no Notebook~0 por dois mecanismos. Para a Série A e a Série B, a API pública da CBF retorna metadados e links de documentos de cada rodada em formato JSON. Os IDs de competição da Série A são conhecidos e fixos por ano. Os da Série B são descobertos automaticamente por busca em torno do ID da Série A, confirmando que o candidato corresponde a uma competição de 38 rodadas com ao menos oito jogos por rodada. Para a Copa do Brasil, os IDs de fase são extraídos da página de tabela por expressão regular.
 
 O download dos PDFs usa retry exponencial e é idempotente: arquivos já existentes são detectados pelo tamanho e ignorados. A Tabela~\ref{tab-cobertura} resume a cobertura final.
 
@@ -151,9 +149,9 @@ O download dos PDFs usa retry exponencial e é idempotente: arquivos já existen
 
 \section{Extração e Limpeza das Justificativas}
 
-O Notebook~1 processa cada PDF com \texttt{pdfplumber}, concatenando o texto de todas as páginas. A extração de cartões usa expressões regulares em três camadas: identificação do carimbo de tempo no formato \texttt{MM:SS [12]T}, detecção do campo \texttt{Motivo:} e separação da justificativa livre após o delimitador. A parte anterior ao delimitador, que contém o código processual padronizado, é descartada. Apenas a redação livre do árbitro é preservada.
+O Notebook~1 processa cada PDF com \texttt{pdfplumber}, concatenando o texto de todas as páginas. A extração de cartões usa expressões regulares em três camadas: identificação do carimbo de tempo no formato \texttt{MM:SS [12]T}, detecção do campo \texttt{Motivo:} e separação da justificativa livre após o delimitador. A parte anterior ao delimitador, que contém o código processual padronizado, é descartada e apenas a redação livre do árbitro é preservada.
 
-Expulsões por segunda advertência são reclassificadas como amarelo para fins de análise disciplinar. Frases processuais que descrevem a segunda advertência são removidas por expressões regulares, preservando apenas o texto que descreve a infração que motivou o segundo cartão.
+O segundo cartão amarelo, que resulta em expulsão, é registrado no campo de vermelhos do PDF, gerando um ruído na base. Para corrigi-lo, esses registros são reclassificados como amarelo e a frase processual que identifica o segundo cartão é removida por expressão regular, preservando apenas o texto da infração original.
 
 O resultado são 25.838 cartões distribuídos em 5.681 partidas. Após normalização de texto, 6.945 textos únicos formam o conjunto de modelagem semântica.
 
@@ -200,10 +198,6 @@ O Notebook~2 implementa a baseline sem regras manuais, sem fine-tuning e sem emb
 \section{Avaliação de Recuperabilidade}
 
 O Notebook~4 avalia os dois conjuntos de rótulos por recuperabilidade em validação cruzada. Para cada sistema, três classificadores são treinados com os embeddings fine-tunados como atributos em 5-fold estratificado: KNN, Regressão Logística e SVM Linear \cite{cortes1995svm,pedregosa2011sklearn}. A lógica é direta: rótulos semanticamente coerentes no espaço de embeddings permitem que um classificador simples os reproduza com alta precisão.
-
-\section{Detecção de Menções ao VAR}
-
-Os motivos de acréscimos contêm referências ao VAR quando o sistema foi usado na partida. Um detector léxico com oito padrões de expressão regular cobre siglas (VAR, AVAR, VOR, ARA), variações descritivas (árbitro de vídeo) e termos de processo (checagem, revisão, review, monitor, cabine). A detecção é binária por partida.
 
 % =============================================================================
 \chapter{Resultados}
@@ -275,7 +269,7 @@ A Figura~\ref{fig-counts} mostra a distribuição de cartões por grupo e a Tabe
   \centering
   \caption{Distribuição de cartões por grupo disciplinar.}
   \label{fig-counts}
-  \includegraphics[width=\textwidth]{card_reason_groups_counts.png}
+  \includegraphics[width=0.75\textwidth]{card_reason_groups_counts.png}
   \fonte{Elaborado pelos autores.}
 \end{figure}
 
@@ -353,7 +347,7 @@ As Figuras~\ref{fig-byteam} e~\ref{fig-byreferee} mostram os perfis disciplinare
   \centering
   \caption{Perfil disciplinar dos times com mais partidas na base.}
   \label{fig-byteam}
-  \includegraphics[width=\textwidth]{card_reason_groups_by_team.png}
+  \includegraphics[width=0.8\textwidth]{card_reason_groups_by_team.png}
   \fonte{Elaborado pelos autores.}
 \end{figure}
 
@@ -361,7 +355,7 @@ As Figuras~\ref{fig-byteam} e~\ref{fig-byreferee} mostram os perfis disciplinare
   \centering
   \caption{Perfil disciplinar dos árbitros com mais partidas na base.}
   \label{fig-byreferee}
-  \includegraphics[width=\textwidth]{card_reason_groups_by_referee.png}
+  \includegraphics[width=0.8\textwidth]{card_reason_groups_by_referee.png}
   \fonte{Elaborado pelos autores.}
 \end{figure}
 
@@ -377,7 +371,7 @@ A Figura~\ref{fig-score-comparison} compara o score médio de coesão entre BERT
   \centering
   \caption{Score médio por grupo: BERTopic versus LLM zero-shot.}
   \label{fig-score-comparison}
-  \includegraphics[width=\textwidth]{baseline_llm_score_mean_by_group.png}
+  \includegraphics[width=0.8\textwidth]{baseline_llm_score_mean_by_group.png}
   \fonte{Elaborado pelos autores.}
 \end{figure}
 
@@ -451,32 +445,6 @@ A concordância direta entre BERTopic e LLM zero-shot é de 61,2\%. A Figura~\re
 
 Grupos como Infringir persistentemente as regras (88,1\%), Simulação (87,4\%) e Falta tática em ataque promissor (86,5\%) têm alta concordância por possuírem vocabulário não ambíguo. Os grupos com concordância abaixo de 15\%, Agarrar ou segurar adversário (3,4\%) e Gesto ou linguagem ofensiva (3,3\%), são aqueles em que a LLM usa categorias mais amplas como substitutos. O maior par de divergência é Ação temerária (BERTopic) contra Confronto físico com adversário (LLM), com 297 textos: a LLM classifica pelo contato físico descrito, sem distinguir a temeridade intencional, separação que o BERTopic faz com base na geometria dos embeddings.
 
-\section{Detecção de Menções ao VAR}
-
-O detector identificou menções ao VAR em 2.035 das 5.681 partidas, equivalente a 35,8\% da base. Os sinais mais frequentes são \texttt{var} (1.749 partidas) e \texttt{checagem} (1.514 partidas). A Figura~\ref{fig-var-year} apresenta a evolução temporal.
-
-\begin{figure}[!htp]
-  \centering
-  \caption{Proporção de partidas com menção ao VAR por ano.}
-  \label{fig-var-year}
-  \includegraphics[width=0.88\textwidth]{var_mentions_by_year.png}
-  \fonte{Elaborado pelos autores.}
-\end{figure}
-
-\FloatBarrier
-
-A proporção cresce de 24,0\% em 2020 para 42,5\% em 2021 e se estabiliza entre 37\% e 43\% de 2022 a 2025, o que é consistente com a adoção progressiva do VAR nas competições brasileiras. O valor de 2026 (28,4\%) é menor por conta da coleta parcial. A Figura~\ref{fig-var-team} mostra a distribuição entre os times com mais partidas.
-
-\begin{figure}[!htp]
-  \centering
-  \caption{Proporção de partidas com menção ao VAR por time.}
-  \label{fig-var-team}
-  \includegraphics[width=0.88\textwidth]{var_mentions_by_team.png}
-  \fonte{Elaborado pelos autores.}
-\end{figure}
-
-\FloatBarrier
-
 % =============================================================================
 \chapter{Conclusão}
 % =============================================================================
@@ -485,11 +453,11 @@ Este trabalho desenvolveu um pipeline de NLP para classificação semântica de 
 
 O fine-tuning produziu ganho mensurável: DBCV aumentou 21,7\% e a taxa de outliers caiu 6,2 pontos percentuais. A comparação com a baseline LLM zero-shot confirmou a vantagem do pipeline especializado: o SVM Linear atinge F1 Macro de 0,882 sobre os rótulos BERTopic contra 0,652 sobre os rótulos da LLM, diferença de 0,230. A concordância direta de 61,2\% mostra que a LLM captura as categorias com vocabulário mais nítido, mas não reproduz as distinções taxonômicas finas do pipeline.
 
-Entre os padrões disciplinares encontrados, Ação temerária concentra 44,4\% dos cartões. Menções ao VAR cresceram de 24\% em 2020 para cerca de 40\% a partir de 2021, estabilizando-se nesse patamar.
+Entre os padrões disciplinares encontrados, Ação temerária concentra 44,4\% dos cartões.
 
 \section{Limitações}
 
-A qualidade da extração depende do formato dos PDFs, e variações de layout ao longo dos anos podem causar erros de parsing em um subconjunto de documentos. A taxonomia manual introduz decisões subjetivas nos casos limítrofes entre grupos com vocabulário próximo, como Conduta violenta, Jogo brusco grave e Ação temerária. O detector léxico de VAR pode subestimar partidas em que o árbitro descreve o processo de revisão sem usar os termos catalogados. A baseline LLM foi avaliada apenas com o modelo \textit{llama3.2:3b}, de pequeno porte, e modelos maiores poderiam ter desempenho diferente.
+A qualidade da extração depende do formato dos PDFs, e variações de layout ao longo dos anos podem causar erros de parsing em um subconjunto de documentos. A taxonomia manual introduz decisões subjetivas nos casos limítrofes entre grupos com vocabulário próximo, como Conduta violenta, Jogo brusco grave e Ação temerária. A baseline LLM foi avaliada apenas com o modelo \textit{llama3.2:3b}, de pequeno porte, e modelos maiores poderiam ter desempenho diferente.
 
 \section{Extensões Futuras}
 
