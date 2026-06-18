@@ -110,7 +110,7 @@ brazil
 \chapter{Introdução}
 % =============================================================================
 
-As súmulas oficiais das competições organizadas pela Confederação Brasileira de Futebol registram as justificativas dos cartões disciplinares aplicados pelos árbitros em linguagem livre, sem padronização lexical obrigatória. Expressões como ``calçar o adversário de forma temerária'', ``ato desleal'' ou ``reclamação contra as decisões da arbitragem'' podem descrever a mesma infração com vocabulário diferente dependendo do árbitro e da temporada. Essa heterogeneidade dificulta qualquer análise sistemática em larga escala.
+As súmulas oficiais das competições organizadas pela Confederação Brasileira de Futebol registram as justificativas dos cartões disciplinares aplicados pelos árbitros em linguagem livre, sem padronização lexical obrigatória. Expressões como ``por calçar seu adversário de maneira temerária na disputa de bola'', ``por dar uma entrada contra um adversário de maneira temerária na disputa da bola'' ou ``entrada temerária em seu adversário na disputa de bola'' descrevem a mesma infração com vocabulário diferente dependendo do árbitro e da partida em questão. Essa heterogeneidade dificulta qualquer análise sistemática em larga escala.
 
 O objetivo deste trabalho é desenvolver e avaliar um pipeline de processamento de linguagem natural que organize automaticamente esses textos em categorias semânticas coerentes com as Leis do Jogo da IFAB \cite{ifab2024laws}. Para isso, combinamos embeddings do modelo \textit{multilingual-e5-large} \cite{wang2022text}, clustering com BERTopic \cite{grootendorst2022bertopic} em duas passagens e fine-tuning contrastivo. Na passagem final, o BERTopic produziu 79 clusters, cujas palavras mais representativas foram analisadas manualmente para consolidar os grupos em uma taxonomia de 18 categorias disciplinares alinhadas com as Leis do Jogo da IFAB. Essa taxonomia foi aplicada a 5.681 súmulas de três competições nacionais, Série A, Série B e Copa do Brasil, cobrindo o período de 2020 a 2026.
 
@@ -122,9 +122,9 @@ O relatório está organizado em quatro capítulos. O Capítulo~2 descreve a col
 
 \section{Coleta de Dados}
 
-As súmulas são publicadas pela CBF em formato PDF \cite{cbf2024sumulas}. A coleta foi realizada no Notebook~0 por dois mecanismos. Para a Série A e a Série B, a API pública da CBF retorna metadados e links de documentos de cada rodada em formato JSON. Os IDs de competição da Série A são conhecidos e fixos por ano. Os da Série B são descobertos automaticamente por busca em torno do ID da Série A, confirmando que o candidato corresponde a uma competição de 38 rodadas com ao menos oito jogos por rodada. Para a Copa do Brasil, os IDs de fase são extraídos da página de tabela por expressão regular.
+As súmulas são publicadas pela CBF em formato PDF \cite{cbf2024sumulas} e a coleta foi realizada no Notebook~0. Para a Série A e a Série B, a API pública da CBF retorna metadados e links de documentos por rodada em formato JSON, sendo os IDs da Série B descobertos automaticamente por busca em torno do ID da Série A, validando que o candidato corresponde a uma competição de 38 rodadas com ao menos oito jogos por rodada. Para a Copa do Brasil, os IDs de fase são extraídos da página de tabela por expressão regular. O download dos PDFs usa retry exponencial e é idempotente, ignorando arquivos já existentes.
 
-O download dos PDFs usa retry exponencial e é idempotente: arquivos já existentes são detectados pelo tamanho e ignorados. A Tabela~\ref{tab-cobertura} resume a cobertura final.
+A Tabela~\ref{tab-cobertura} resume a cobertura final.
 
 \begin{table}[!htp]
   \centering
