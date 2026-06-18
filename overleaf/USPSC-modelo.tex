@@ -153,7 +153,7 @@ O Notebook~1 processa cada PDF com \texttt{pdfplumber}, concatenando o texto de 
 
 O segundo cartão amarelo, que resulta em expulsão, é registrado no campo de vermelhos do PDF, gerando um ruído na base. Para corrigi-lo, esses registros são reclassificados como amarelo e a frase processual que identifica o segundo cartão é removida por expressão regular, preservando apenas o texto da infração original.
 
-O resultado são 25.838 cartões distribuídos em 5.681 partidas. Após normalização de texto, 6.945 textos únicos formam o conjunto de modelagem semântica.
+O resultado são 25.838 cartões distribuídos em 5.681 partidas, que após normalização de texto produzem 6.945 textos únicos usados na modelagem semântica.
 
 \section{Grupos Disciplinares de Referência}
 
@@ -198,13 +198,13 @@ Um grid search em \texttt{n\_neighbors} (de 5 a 50) e \texttt{min\_topic\_size} 
 
 \subsection{BERTopic Passagem 1 e Fine-Tuning}
 
-Com os hiperparâmetros ótimos, a primeira passagem do BERTopic produz 62 clusters. Esses clusters não são os rótulos finais, mas servem como fonte de pares positivos para o fine-tuning contrastivo do modelo de embeddings.
+Com os hiperparâmetros ótimos, a primeira passagem do BERTopic produz 62 clusters que não são os rótulos finais, mas servem como fonte de pares positivos para o fine-tuning contrastivo do modelo de embeddings.
 
 O fine-tuning usa \textit{MultipleNegativesRankingLoss} \cite{karpukhin2020dpr,gao2021simcse}: dois textos no mesmo cluster formam um par positivo e os demais positivos no mesmo batch atuam como negativos implícitos. O objetivo é aproximar textos semanticamente equivalentes no espaço de embeddings e afastar textos de infrações diferentes. O ajuste é feito por uma época, e o modelo resultante é salvo para reutilização.
 
 \subsection{BERTopic Passagem 2}
 
-Um segundo grid search é executado sobre os embeddings do modelo fine-tunado, pois a geometria do espaço muda após o ajuste. A Passagem~2 produz 79 clusters com melhor separação, confirmada pelo ganho de 21,7\% no DBCV.
+Um segundo grid search é executado sobre os embeddings do modelo fine-tunado, pois a geometria do espaço muda após o ajuste, e a Passagem~2 produz 79 clusters com melhor separação, confirmada pelo ganho de 21,7\% no DBCV.
 
 \subsection{Taxonomia Manual}
 
@@ -215,9 +215,9 @@ O BERTopic agrupa os textos, mas a decisão semântica final é uma taxonomia ma
 
 Os dois métodos são comparados por dois critérios complementares, aplicados independentemente a cada conjunto de rótulos.
 
-O primeiro critério é o \textbf{score de coesão semântica}. Para cada texto, calcula-se a similaridade de cosseno entre seu embedding e o centroide ponderado do grupo ao qual foi atribuído. O score médio por grupo indica o quão compactos e internamente coesos são os textos reunidos sob aquela categoria. Valores altos significam que o modelo de embeddings percebe os textos do grupo como semanticamente próximos, enquanto valores baixos indicam grupos com vocabulário mais heterogêneo.
+O primeiro critério é o \textbf{score de coesão semântica}: para cada texto, calcula-se a similaridade de cosseno entre seu embedding e o centroide ponderado do grupo atribuído, e o score médio por grupo indica o quão compactos são os textos daquela categoria no espaço vetorial. Valores altos significam que o modelo percebe os textos como semanticamente próximos, enquanto valores baixos indicam grupos com vocabulário heterogêneo.
 
-O segundo critério é a \textbf{recuperabilidade}, avaliada no Notebook~4. Os rótulos atribuídos por cada método são tratados como verdade e utilizados para treinar classificadores em validação cruzada com 5 folds estratificados, usando os embeddings fine-tunados como único atributo. Três classificadores são avaliados: KNN, Regressão Logística e SVM Linear \cite{cortes1995svm,pedregosa2011sklearn}. A ideia é que rótulos semanticamente coerentes no espaço de embeddings devem ser recuperáveis por um classificador simples com alta precisão. As métricas reportadas são F1 Macro e Accuracy.
+O segundo critério é a \textbf{recuperabilidade}, avaliada no Notebook~4: os rótulos de cada método são tratados como verdade e usados para treinar três classificadores em validação cruzada com 5 folds estratificados, com os embeddings fine-tunados como único atributo. São avaliados KNN, Regressão Logística e SVM Linear \cite{cortes1995svm,pedregosa2011sklearn}, e a ideia é que grupos semanticamente coerentes no espaço de embeddings devem ser recuperáveis com alta precisão por um classificador simples. As métricas reportadas são F1 Macro e Accuracy.
 
 Juntos, os dois critérios cobrem perspectivas distintas: o score de coesão mede a compactidade interna de cada grupo individualmente, enquanto a recuperabilidade avalia se os grupos são separáveis entre si no espaço de embeddings.
 
@@ -239,7 +239,7 @@ A base modelada contém 25.834 cartões: 24.897 amarelos (96,4\%) e 937 vermelho
 
 \FloatBarrier
 
-O volume é estável entre 2020 e 2025, com cerca de 3.880 amarelos por ano. O ano de 2026 é parcial. A Figura~\ref{fig-top-texts} mostra os textos de justificativa mais frequentes, revelando que variações de ``calçar o adversário de maneira temerária'' e ``falta tática impedindo ataque promissor'' dominam o corpus. Essa concentração em poucos padrões coexiste com alta diversidade lexical nos 6.945 textos únicos, o que justifica o uso de embeddings densos em vez de correspondência lexical direta.
+O volume é estável entre 2020 e 2025 com cerca de 3.880 amarelos por ano, sendo 2026 parcial. A Figura~\ref{fig-top-texts} mostra os textos mais frequentes, revelando que variações de ``calçar o adversário de maneira temerária'' e ``falta tática impedindo ataque promissor'' dominam o corpus, mas essa concentração em poucos padrões coexiste com alta diversidade lexical nos 6.945 textos únicos, o que justifica o uso de embeddings densos em vez de correspondência lexical direta.
 
 \begin{figure}[!htp]
   \centering
@@ -253,7 +253,7 @@ O volume é estável entre 2020 e 2025, com cerca de 3.880 amarelos por ano. O a
 
 \section{Efeito do Fine-Tuning}
 
-A Tabela~\ref{tab-ablation} resume os indicadores das duas passagens. A Figura~\ref{fig-ablation} ilustra a comparação.
+A Tabela~\ref{tab-ablation} resume os indicadores das duas passagens e a Figura~\ref{fig-ablation} ilustra a comparação.
 
 \begin{table}[!htp]
   \centering
@@ -283,9 +283,41 @@ A Tabela~\ref{tab-ablation} resume os indicadores das duas passagens. A Figura~\
 
 O fine-tuning reduz a taxa de outliers em 6,2 pontos percentuais e aumenta o DBCV em 21,7\%. O maior número de clusters na Passagem~2 reflete a maior resolução do espaço após o ajuste, com subgrupos antes misturados sendo separados em regiões densas distintas.
 
-\section{Taxonomia Final: 18 Grupos Disciplinares}
+\section{Taxonomia Final e Resultados da Modelagem Proposta}
 
-A Figura~\ref{fig-counts} mostra a distribuição de cartões por grupo e a Tabela~\ref{tab-grupos} detalha os 18 grupos.
+A Figura~\ref{fig-proporcoes} mostra a evolução das proporções por ano, revelando distribuição relativamente estável entre 2020 e 2025, com leve tendência de queda na parcela de Ação temerária, de 49,4\% em 2020 para 39,8\% em 2026, enquanto grupos como Agarrar ou segurar adversário crescem moderadamente.
+
+\begin{figure}[!htp]
+  \centering
+  \caption{Proporção de cartões por grupo ao longo dos anos.}
+  \label{fig-proporcoes}
+  \includegraphics[width=\textwidth]{card_reason_groups_proportions_by_year.png}
+  \fonte{Elaborado pelos autores.}
+\end{figure}
+
+\FloatBarrier
+
+As Figuras~\ref{fig-byteam} e~\ref{fig-byreferee} mostram os perfis disciplinares por time e árbitro, servindo como diagnóstico qualitativo. Times com maior proporção de faltas táticas podem indicar padrão defensivo, enquanto diferenças entre árbitros podem refletir estilo de condução e perfil das competições apitadas.
+
+\begin{figure}[!htp]
+  \centering
+  \caption{Perfil disciplinar dos times com mais partidas na base.}
+  \label{fig-byteam}
+  \includegraphics[width=0.8\textwidth]{card_reason_groups_by_team.png}
+  \fonte{Elaborado pelos autores.}
+\end{figure}
+
+\begin{figure}[!htp]
+  \centering
+  \caption{Perfil disciplinar dos árbitros com mais partidas na base.}
+  \label{fig-byreferee}
+  \includegraphics[width=0.8\textwidth]{card_reason_groups_by_referee.png}
+  \fonte{Elaborado pelos autores.}
+\end{figure}
+
+\FloatBarrier
+
+A Figura~\ref{fig-counts} mostra a distribuição total de cartões por grupo e a Tabela~\ref{tab-grupos} detalha os 18 grupos.
 
 \begin{figure}[!htp]
   \centering
@@ -333,7 +365,7 @@ A Figura~\ref{fig-counts} mostra a distribuição de cartões por grupo e a Tabe
 
 \FloatBarrier
 
-Ação temerária concentra 44,4\% dos cartões, refletindo a predominância de faltas de disputa de bola. Os três grupos mais frequentes somam 72,9\% dos eventos. Grupos de menor frequência, como Não respeitar distância regulamentar e Entrar ou sair do campo sem autorização, possuem vocabulário mais específico e consequentemente maior coesão semântica.
+Ação temerária concentra 44,4\% dos cartões, e os três grupos mais frequentes somam juntos 72,9\% dos eventos, refletindo a predominância de infrações físicas de disputa de bola. Grupos de menor frequência, como Não respeitar distância regulamentar e Entrar ou sair do campo sem autorização, possuem vocabulário mais específico e consequentemente maior coesão semântica.
 
 A Figura~\ref{fig-representativeness} apresenta o score médio de coesão por grupo, medido como a similaridade de cosseno média de cada texto ao centroide ponderado do grupo no espaço de embeddings fine-tunados.
 
@@ -348,40 +380,6 @@ A Figura~\ref{fig-representativeness} apresenta o score médio de coesão por gr
 \FloatBarrier
 
 Os grupos com maior coesão são Infringir persistentemente as regras (0,973), Entrar ou sair do campo sem autorização (0,946) e Jogo brusco grave (0,925). Ação temerária, o mais frequente, tem o menor score (0,580), refletindo a alta variação lexical com que árbitros descrevem esse tipo de falta.
-
-\section{Análise Temporal e por Perfil}
-
-A Figura~\ref{fig-proporcoes} mostra a evolução das proporções por ano. A distribuição é relativamente estável entre 2020 e 2025. A parcela de Ação temerária apresenta leve tendência de queda, de 49,4\% em 2020 para 39,8\% em 2026, enquanto grupos como Agarrar ou segurar adversário crescem moderadamente.
-
-\begin{figure}[!htp]
-  \centering
-  \caption{Proporção de cartões por grupo ao longo dos anos.}
-  \label{fig-proporcoes}
-  \includegraphics[width=\textwidth]{card_reason_groups_proportions_by_year.png}
-  \fonte{Elaborado pelos autores.}
-\end{figure}
-
-\FloatBarrier
-
-As Figuras~\ref{fig-byteam} e~\ref{fig-byreferee} mostram os perfis disciplinares por time e árbitro. Times com maior proporção de faltas táticas podem indicar padrão defensivo de interrupção de transições. Diferenças entre árbitros podem refletir estilo de condução e perfil das competições apitadas. Esses recortes servem como diagnóstico qualitativo.
-
-\begin{figure}[!htp]
-  \centering
-  \caption{Perfil disciplinar dos times com mais partidas na base.}
-  \label{fig-byteam}
-  \includegraphics[width=0.8\textwidth]{card_reason_groups_by_team.png}
-  \fonte{Elaborado pelos autores.}
-\end{figure}
-
-\begin{figure}[!htp]
-  \centering
-  \caption{Perfil disciplinar dos árbitros com mais partidas na base.}
-  \label{fig-byreferee}
-  \includegraphics[width=0.8\textwidth]{card_reason_groups_by_referee.png}
-  \fonte{Elaborado pelos autores.}
-\end{figure}
-
-\FloatBarrier
 
 \section{Comparação entre Métodos}
 
@@ -403,7 +401,7 @@ O BERTopic supera a LLM zero-shot na maioria dos grupos. Grupos com vocabulário
 
 \subsection{Recuperabilidade por Classificadores}
 
-A Tabela~\ref{tab-retrieval} apresenta os resultados em validação cruzada com 5 folds. Os embeddings fine-tunados são os únicos atributos dos classificadores em ambos os experimentos.
+A Tabela~\ref{tab-retrieval} apresenta os resultados em validação cruzada com 5 folds, usando os embeddings fine-tunados como único atributo dos classificadores em ambos os experimentos.
 
 \begin{table}[!htp]
   \centering
@@ -427,7 +425,7 @@ A Tabela~\ref{tab-retrieval} apresenta os resultados em validação cruzada com 
 
 \FloatBarrier
 
-O SVM Linear atinge F1 Macro de 0,882 para BERTopic contra 0,652 para LLM, diferença de 0,230 pontos. A Figura~\ref{fig-retrieval-global} ilustra a comparação.
+O SVM Linear atinge F1 Macro de 0,882 para BERTopic contra 0,652 para LLM, uma diferença de 0,230 pontos ilustrada na Figura~\ref{fig-retrieval-global}.
 
 \begin{figure}[!htp]
   \centering
@@ -453,7 +451,7 @@ A Figura~\ref{fig-retrieval-grupo} mostra o F1 por grupo para o SVM Linear. No B
 
 \subsection{Concordância entre Sistemas}
 
-A concordância direta entre BERTopic e LLM zero-shot é de 61,2\%. A Figura~\ref{fig-agreement} detalha a taxa por grupo.
+A concordância direta entre BERTopic e LLM zero-shot é de 61,2\%, com a Figura~\ref{fig-agreement} detalhando a taxa por grupo.
 
 \begin{figure}[!htp]
   \centering
@@ -473,17 +471,13 @@ Grupos como Infringir persistentemente as regras (88,1\%), Simulação (87,4\%) 
 
 Este trabalho desenvolveu um pipeline de NLP para classificação semântica de justificativas de cartões em súmulas da CBF. O método combina embeddings multilinguais com BERTopic em duas passagens e fine-tuning contrastivo auto-supervisionado, produzindo uma taxonomia de 18 grupos disciplinares alinhados com as Leis do Jogo da IFAB.
 
-O fine-tuning produziu ganho mensurável: DBCV aumentou 21,7\% e a taxa de outliers caiu 6,2 pontos percentuais. A comparação com a baseline LLM zero-shot confirmou a vantagem do pipeline especializado: o SVM Linear atinge F1 Macro de 0,882 sobre os rótulos BERTopic contra 0,652 sobre os rótulos da LLM, diferença de 0,230. A concordância direta de 61,2\% mostra que a LLM captura as categorias com vocabulário mais nítido, mas não reproduz as distinções taxonômicas finas do pipeline.
+O fine-tuning produziu ganho mensurável, com o DBCV aumentando 21,7\% e a taxa de outliers caindo 6,2 pontos percentuais. A comparação com a baseline LLM zero-shot confirmou a vantagem do pipeline especializado: o SVM Linear atinge F1 Macro de 0,882 sobre os rótulos BERTopic contra 0,652 sobre os rótulos da LLM, e a concordância direta de 61,2\% mostra que a LLM captura bem as categorias com vocabulário nítido, mas não reproduz as distinções taxonômicas mais finas. Entre os padrões disciplinares encontrados, Ação temerária concentra 44,4\% dos cartões, confirmando a predominância de infrações físicas de disputa de bola nas competições analisadas.
 
-Entre os padrões disciplinares encontrados, Ação temerária concentra 44,4\% dos cartões.
+\section{Limitações e Extensões Futuras}
 
-\section{Limitações}
+O ponto mais frágil do trabalho é a definição manual dos 18 grupos. A taxonomia foi construída a partir da leitura das palavras mais representativas de cada cluster e do conhecimento das Leis do Jogo, o que funciona bem para grupos com vocabulário claro, mas torna as fronteiras entre grupos próximos, como Conduta violenta e Jogo brusco grave, dependentes de julgamento humano. O número de grupos também foi fixado manualmente, sem garantia de que 18 seja o mais adequado para o corpus.
 
-A qualidade da extração depende do formato dos PDFs, e variações de layout ao longo dos anos podem causar erros de parsing em um subconjunto de documentos. A taxonomia manual introduz decisões subjetivas nos casos limítrofes entre grupos com vocabulário próximo, como Conduta violenta, Jogo brusco grave e Ação temerária. A baseline LLM foi avaliada apenas com o modelo \textit{llama3.2:3b}, de pequeno porte, e modelos maiores poderiam ter desempenho diferente.
-
-\section{Extensões Futuras}
-
-Extensões naturais incluem aplicar o pipeline a competições estaduais, investigar a evolução de grupos específicos em resposta a mudanças nas Leis do Jogo e explorar a relação entre perfil disciplinar de árbitros e resultados de partidas. Modelos de linguagem maiores poderiam ser avaliados como baseline zero-shot. Aprendizado ativo poderia reduzir o esforço de rotulagem manual em iterações futuras, priorizando revisão humana nos textos mais próximos das fronteiras entre grupos.
+A extensão mais direta é automatizar essa etapa: em vez de mapear os clusters a categorias fixas manualmente, iterações com aprendizado ativo poderiam refinar as fronteiras com base em revisão humana concentrada nos casos ambíguos. Explorar estruturas hierárquicas de clusters também seria interessante, pois permitiria representar subtipos dentro de Ação temerária sem forçar separações artificiais entre categorias que compartilham vocabulário. Por fim, o problema poderia ser tratado como classificação multirrótulo, já que algumas justificativas descrevem infrações que se enquadram em mais de um grupo ao mesmo tempo.
 
 \postextual
 
