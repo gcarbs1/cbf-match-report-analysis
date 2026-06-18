@@ -114,7 +114,7 @@ As súmulas oficiais das competições organizadas pela Confederação Brasileir
 
 O objetivo deste trabalho é desenvolver e avaliar um pipeline de processamento de linguagem natural que organize automaticamente esses textos em categorias semânticas coerentes com as Leis do Jogo da IFAB \cite{ifab2024laws}. Para isso, combinamos embeddings do modelo \textit{multilingual-e5-large} \cite{wang2022text}, clustering com BERTopic \cite{grootendorst2022bertopic} em duas passagens e fine-tuning contrastivo. Na passagem final, o BERTopic produziu 79 clusters, cujas palavras mais representativas foram analisadas manualmente para consolidar os grupos em uma taxonomia de 18 categorias disciplinares alinhadas com as Leis do Jogo da IFAB. Essa taxonomia foi aplicada a 5.681 súmulas de três competições nacionais, Série A, Série B e Copa do Brasil, cobrindo o período de 2020 a 2026.
 
-O relatório está organizado em quatro capítulos. O Capítulo~2 descreve a coleta dos dados, a limpeza das súmulas e o pipeline NLP completo. O Capítulo~3 apresenta os resultados da exploração, da ablação de modelos, da taxonomia final e da comparação entre métodos. O Capítulo~4 discute as conclusões, limitações e possíveis extensões.
+O relatório está organizado em quatro capítulos. O Capítulo~2 descreve a coleta dos dados, a limpeza das súmulas, a definição dos grupos disciplinares, a baseline zero-shot com LLM, o pipeline proposto com embeddings e fine-tuning contrastivo, e os critérios de avaliação adotados: score de coesão semântica por similaridade de cosseno e recuperabilidade por classificação em validação cruzada. O Capítulo~3 apresenta os resultados da exploração dos dados, da ablação do fine-tuning, da taxonomia final e da comparação entre os dois métodos. O Capítulo~4 discute as conclusões, limitações e possíveis extensões.
 
 % =============================================================================
 \chapter{Metodologia}
@@ -155,6 +155,25 @@ O segundo cartão amarelo, que resulta em expulsão, é registrado no campo de v
 
 O resultado são 25.838 cartões distribuídos em 5.681 partidas. Após normalização de texto, 6.945 textos únicos formam o conjunto de modelagem semântica.
 
+\section{Grupos Disciplinares de Referência}
+
+Antes de apresentar os métodos, é necessário definir a taxonomia de destino, pois ela é compartilhada tanto pela baseline quanto pelo pipeline proposto. Com base nas Leis do Jogo da IFAB \cite{ifab2024laws}, foram estabelecidos 18 grupos disciplinares que cobrem os principais motivos de cartão registrados nas súmulas: Ação temerária, Protesto contra a arbitragem, Falta tática em ataque promissor, Retardar reinício do jogo, Agarrar ou segurar adversário, Confronto físico com adversário, Conduta antidesportiva, Insubordinação da comissão técnica, Comemoração irregular, Infringir persistentemente as regras, Jogo brusco grave, Toque de mão na bola, Conduta violenta, Gesto ou linguagem ofensiva, Impedir clara oportunidade de gol, Simulação, Entrar ou sair do campo sem autorização e Não respeitar distância regulamentar.
+
+\section{Baseline: Classificação Zero-Shot com LLM}
+
+O ponto de partida é uma baseline simples, sem embeddings especializados nem fine-tuning. O modelo \textit{llama3.2:3b} \cite{meta2024llama3}, executado localmente via Ollama, recebe para cada texto um prompt em português com a justificativa do cartão e a lista dos 18 grupos, com a instrução de responder apenas com o nome exato do grupo escolhido. Temperatura zero elimina variação aleatória. O prompt seguiu a estrutura abaixo, onde \texttt{\{motivo\}} é substituído pelo texto da justificativa de cada cartão:
+
+\begin{quote}
+\small
+Você é um especialista em regras do futebol. Classifique o motivo de cartão abaixo em exatamente um dos grupos listados. Responda APENAS com o nome exato do grupo, sem explicações adicionais.
+
+Motivo: \texttt{\{motivo\}}
+
+Grupos: Ação temerária, Protesto contra a arbitragem, Falta tática em ataque promissor, \ldots{} (15 grupos restantes)
+\end{quote}
+
+Um cache em disco permite retomar o processamento sem reclassificar textos já resolvidos. De 6.945 textos, 184 (2,65\%) retornaram resposta não parseável.
+
 \section{Pipeline de Embeddings e Clustering}
 
 O pipeline principal, implementado no Notebook~3, segue quatro etapas encadeadas.
@@ -179,7 +198,7 @@ Um grid search em \texttt{n\_neighbors} (de 5 a 50) e \texttt{min\_topic\_size} 
 
 \subsection{BERTopic Passagem 1 e Fine-Tuning}
 
-Com os hiperparâmetros ótimos, a primeira passagem do BERTopic produz 62 clusters. Os clusters da Passagem~1 não são os rótulos finais: eles servem como fonte de pares positivos para o fine-tuning contrastivo.
+Com os hiperparâmetros ótimos, a primeira passagem do BERTopic produz 62 clusters. Esses clusters não são os rótulos finais, mas servem como fonte de pares positivos para o fine-tuning contrastivo do modelo de embeddings.
 
 O fine-tuning usa \textit{MultipleNegativesRankingLoss} \cite{karpukhin2020dpr,gao2021simcse}: dois textos no mesmo cluster formam um par positivo e os demais positivos no mesmo batch atuam como negativos implícitos. O objetivo é aproximar textos semanticamente equivalentes no espaço de embeddings e afastar textos de infrações diferentes. O ajuste é feito por uma época, e o modelo resultante é salvo para reutilização.
 
@@ -191,13 +210,16 @@ Um segundo grid search é executado sobre os embeddings do modelo fine-tunado, p
 
 O BERTopic agrupa os textos, mas a decisão semântica final é uma taxonomia manual que mapeia os 79 clusters em 18 grupos disciplinares correspondentes às Leis do Jogo da IFAB. A atribuição segue três camadas: mapeamento direto de cluster para grupo, âncoras lexicais de alta precisão que corrigem clusters mistos, e um fallback auditável para textos outliers. As âncoras cobrem termos determinísticos como ``temerária'', ``força excessiva'', ``oportunidade clara de gol'', ``simulação'' e ``mão na bola''. No total, 6.069 ajustes por âncoras foram aplicados.
 
-\section{Baseline: Classificação Zero-Shot com LLM}
 
-O Notebook~2 implementa a baseline sem regras manuais, sem fine-tuning e sem embeddings especializados. O modelo \textit{llama3.2:3b} \cite{meta2024llama3}, executado localmente via Ollama, recebe para cada texto: a justificativa de cartão, a lista com os nomes dos 18 grupos e a instrução de responder apenas com o nome exato do grupo escolhido. Temperatura zero elimina variação aleatória. Um cache em disco permite retomar o processamento sem reclassificar textos já resolvidos. De 6.945 textos, 184 (2,65\%) retornaram resposta não parseável.
+\section{Critérios de Avaliação}
 
-\section{Avaliação de Recuperabilidade}
+Os dois métodos são comparados por dois critérios complementares, aplicados independentemente a cada conjunto de rótulos.
 
-O Notebook~4 avalia os dois conjuntos de rótulos por recuperabilidade em validação cruzada. Para cada sistema, três classificadores são treinados com os embeddings fine-tunados como atributos em 5-fold estratificado: KNN, Regressão Logística e SVM Linear \cite{cortes1995svm,pedregosa2011sklearn}. A lógica é direta: rótulos semanticamente coerentes no espaço de embeddings permitem que um classificador simples os reproduza com alta precisão.
+O primeiro critério é o \textbf{score de coesão semântica}. Para cada texto, calcula-se a similaridade de cosseno entre seu embedding e o centroide ponderado do grupo ao qual foi atribuído. O score médio por grupo indica o quão compactos e internamente coesos são os textos reunidos sob aquela categoria. Valores altos significam que o modelo de embeddings percebe os textos do grupo como semanticamente próximos, enquanto valores baixos indicam grupos com vocabulário mais heterogêneo.
+
+O segundo critério é a \textbf{recuperabilidade}, avaliada no Notebook~4. Os rótulos atribuídos por cada método são tratados como verdade e utilizados para treinar classificadores em validação cruzada com 5 folds estratificados, usando os embeddings fine-tunados como único atributo. Três classificadores são avaliados: KNN, Regressão Logística e SVM Linear \cite{cortes1995svm,pedregosa2011sklearn}. A ideia é que rótulos semanticamente coerentes no espaço de embeddings devem ser recuperáveis por um classificador simples com alta precisão. As métricas reportadas são F1 Macro e Accuracy.
+
+Juntos, os dois critérios cobrem perspectivas distintas: o score de coesão mede a compactidade interna de cada grupo individualmente, enquanto a recuperabilidade avalia se os grupos são separáveis entre si no espaço de embeddings.
 
 % =============================================================================
 \chapter{Resultados}
