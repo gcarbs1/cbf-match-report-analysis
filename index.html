@@ -65,14 +65,25 @@
   header.hero { padding: 96px 0 56px; }
   .hero-inner { display: flex; align-items: center; justify-content: space-between; gap: 48px; }
   .hero-text { flex: 1; min-width: 0; }
-  .hero-art { flex: none; width: 168px; }
-  .hero-art svg { display: block; width: 100%; height: auto; filter: drop-shadow(0 16px 24px rgba(24,19,15,0.16)); }
+  .hero-art { flex: none; width: clamp(200px, 22vw, 300px); transition: transform .35s cubic-bezier(.16,1,.3,1); }
+  .hero-art:hover { transform: scale(1.045); }
+  .hero-art svg {
+    display: block; width: 100%; height: auto;
+    filter: drop-shadow(0 2px 3px rgba(24,19,15,0.22)) drop-shadow(0 20px 28px rgba(24,19,15,0.18));
+  }
   .card-back, .card-front { transform-box: fill-box; transform-origin: 50% 50%; }
   .card-back { transform: rotate(-9deg); }
   .card-front { transform: rotate(7deg); }
   @media (prefers-reduced-motion: no-preference) {
-    .hero-art.in .card-back { animation: cardSettleBack .9s cubic-bezier(.16,1,.3,1); }
-    .hero-art.in .card-front { animation: cardSettleFront .9s cubic-bezier(.16,1,.3,1) .12s backwards; }
+    .hero-art.in .card-back {
+      animation: cardSettleBack .9s cubic-bezier(.16,1,.3,1) both,
+                 cardFloatBack 4.6s ease-in-out .9s infinite alternate;
+    }
+    .hero-art.in .card-front {
+      animation: cardSettleFront .9s cubic-bezier(.16,1,.3,1) .12s both,
+                 cardFloatFront 3.8s ease-in-out 1.02s infinite alternate;
+    }
+    .hero-art:hover .card-back, .hero-art:hover .card-front { animation-play-state: paused; }
   }
   @keyframes cardSettleBack {
     from { transform: rotate(-26deg) translate(-16px, 10px) scale(.8); opacity: 0; }
@@ -81,6 +92,14 @@
   @keyframes cardSettleFront {
     from { transform: rotate(22deg) translate(16px, -12px) scale(.8); opacity: 0; }
     to   { transform: rotate(7deg) translate(0, 0) scale(1); opacity: 1; }
+  }
+  @keyframes cardFloatBack {
+    from { transform: rotate(-9deg) translateY(0); }
+    to   { transform: rotate(-13deg) translateY(-9px); }
+  }
+  @keyframes cardFloatFront {
+    from { transform: rotate(7deg) translateY(0); }
+    to   { transform: rotate(11deg) translateY(-11px); }
   }
   header.hero h1 {
     font-size: clamp(38px, 6vw, 64px);
@@ -249,12 +268,30 @@
       </div>
       <div class="hero-art reveal" style="transition-delay:60ms" aria-hidden="true">
         <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="gradWarn" x1="15%" y1="0%" x2="85%" y2="100%">
+              <stop offset="0%" stop-color="#f9dc79"></stop>
+              <stop offset="48%" stop-color="#e0a800"></stop>
+              <stop offset="100%" stop-color="#a17c05"></stop>
+            </linearGradient>
+            <linearGradient id="gradCrit" x1="15%" y1="0%" x2="85%" y2="100%">
+              <stop offset="0%" stop-color="#c85a4f"></stop>
+              <stop offset="48%" stop-color="#952119"></stop>
+              <stop offset="100%" stop-color="#57110c"></stop>
+            </linearGradient>
+            <linearGradient id="cardSheen" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#ffffff" stop-opacity="0.45"></stop>
+              <stop offset="26%" stop-color="#ffffff" stop-opacity="0.1"></stop>
+              <stop offset="38%" stop-color="#ffffff" stop-opacity="0"></stop>
+            </linearGradient>
+          </defs>
           <g class="card-back">
-            <rect x="54" y="34" width="86" height="120" rx="12" style="fill:var(--status-warn)" stroke="var(--ink)" stroke-opacity="0.14" stroke-width="1.5"></rect>
+            <rect x="54" y="34" width="86" height="120" rx="14" fill="url(#gradWarn)" stroke="#8a6a06" stroke-opacity="0.45" stroke-width="1.25"></rect>
+            <rect x="54" y="34" width="86" height="120" rx="14" fill="url(#cardSheen)"></rect>
           </g>
           <g class="card-front">
-            <rect x="64" y="46" width="86" height="120" rx="12" style="fill:var(--status-crit)" stroke="var(--ink)" stroke-opacity="0.14" stroke-width="1.5"></rect>
-            <path d="M132 46 L150 46 L150 64 Z" style="fill:var(--paper)" fill-opacity="0.32"></path>
+            <rect x="64" y="46" width="86" height="120" rx="14" fill="url(#gradCrit)" stroke="#4c110b" stroke-opacity="0.45" stroke-width="1.25"></rect>
+            <rect x="64" y="46" width="86" height="120" rx="14" fill="url(#cardSheen)"></rect>
           </g>
         </svg>
       </div>
