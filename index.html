@@ -133,12 +133,12 @@
   /* ============================= sections ============================= */
   section { padding: 0 0 72px; }
   #panorama { padding-top: 40px; }
-  .section-head { max-width: 68ch; margin-bottom: 22px; }
+  .section-head { margin-bottom: 22px; }
   .section-head h2 {
     font-size: clamp(24px, 3vw, 32px);
     display: inline-block; border-bottom: 4px solid var(--ink); padding-bottom: 12px;
   }
-  .section-head p.lede { margin-top: 12px; font-size: 15.5px; }
+  .section-head p.lede { margin-top: 12px; font-size: 15.5px; max-width: none; text-align: justify; text-justify: inter-word; }
 
   .card {
     background: var(--surface); border: 1px solid var(--border);
@@ -375,6 +375,7 @@
     <div class="wrap">
       <div class="section-head reveal">
         <h2>Justificativas de cartão listadas</h2>
+        <p class="lede">Todas as justificativas de cartão rotuladas nas súmulas, ordenadas por frequência e divididas entre amarelos e vermelhos.</p>
       </div>
       <div class="card reveal" style="transition-delay:80ms">
         <div class="legend" id="motivosLegend"></div>
@@ -388,6 +389,7 @@
     <div class="wrap">
       <div class="section-head reveal">
         <h2>Menções ao VAR ao longo dos anos</h2>
+        <p class="lede">Percentual de partidas de cada temporada cuja súmula registra ao menos uma menção ao VAR.</p>
       </div>
       <div class="card var-trend-card reveal" style="transition-delay:80ms">
         <svg id="varTrendChart" class="var-trend-svg" viewBox="0 0 900 300" role="img" aria-label="Percentual anual de partidas com menção ao VAR"></svg>
@@ -399,6 +401,7 @@
     <div class="wrap">
       <div class="section-head reveal">
         <h2>Ocorrências por jogo</h2>
+        <p class="lede">Cada ponto é um time ou árbitro, posicionado pela taxa por jogo do indicador escolhido. Serve para comparar todos de uma vez e identificar valores fora da curva.</p>
       </div>
       <div class="explorer-controls">
         <div class="segmented" id="swarmDimToggle">
@@ -425,6 +428,7 @@
     <div class="wrap">
       <div class="section-head reveal">
         <h2>Explorar por time e árbitro</h2>
+        <p class="lede">Busque um time ou árbitro para ver seu perfil de cartões por jogo e os motivos que mais se destacam frente à média dos demais.</p>
       </div>
       <div class="explorer-controls">
         <div class="segmented" id="dimensionToggle">
@@ -449,6 +453,7 @@
     <div class="wrap">
       <div class="section-head reveal">
         <h2>Explorar por jogador</h2>
+        <p class="lede">Busque um jogador para ver seu histórico de cartões, discriminado por tipo, e os motivos mais recorrentes.</p>
       </div>
       <div class="explorer-controls">
         <div class="autocomplete">
@@ -468,6 +473,7 @@
     <div class="wrap">
       <div class="section-head reveal">
         <h2>Cartões de uma partida</h2>
+        <p class="lede">Escolha um ano e uma partida para ver, cartão a cartão, o jogador, o motivo e o trecho da súmula que o justificou.</p>
       </div>
       <div class="explorer-controls">
         <div class="segmented year-toggle" id="yearToggle"></div>
