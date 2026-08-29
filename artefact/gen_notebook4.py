@@ -1,24 +1,33 @@
 import json
 from pathlib import Path
 
+_cell_number = 0
+
+
+def cell_id():
+    global _cell_number
+    _cell_number += 1
+    return f"cell-{_cell_number:02d}"
+
+
 def md(*lines):
-    return {"cell_type": "markdown", "metadata": {}, "source": [l + "\n" for l in lines[:-1]] + ([lines[-1]] if lines else [])}
+    return {"cell_type": "markdown", "id": cell_id(), "metadata": {}, "source": [l + "\n" for l in lines[:-1]] + ([lines[-1]] if lines else [])}
 
 def code(src):
-    return {"cell_type": "code", "execution_count": None, "metadata": {}, "outputs": [],
+    return {"cell_type": "code", "id": cell_id(), "execution_count": None, "metadata": {}, "outputs": [],
             "source": [l + "\n" for l in src.strip("\n").split("\n")][:-1] + [src.strip("\n").split("\n")[-1]]}
 
 cells = []
 
 cells.append(md(
-"# **4. Publicar dados no site**",
+"# **4. Atualizar dados do site**",
 "",
 "Este notebook fecha o pipeline: lê as saídas já processadas pelos notebooks anteriores "
-"(`0` a `3`, em especial o tagueamento do notebook `2`) e regenera os três blocos de dados "
+"(`0` a `3`, em especial o tagueamento do notebook `2`) e regenera os quatro blocos de dados "
 "embutidos no `index.html` do repositório público `cbf-match-report-analysis-page` "
-"(`match-data`, `site-data` e `player-data`).",
+"(`match-data`, `site-data`, `player-data` e `var-data`).",
 "",
-"O restante do `index.html` (HTML, CSS, JavaScript de renderização) não é tocado — só os três "
+"O restante do `index.html` (HTML, CSS, JavaScript de renderização) não é tocado — só os quatro "
 "blocos `<script type=\"application/json\">` são substituídos.",
 "",
 "Fluxo de atualização: rode `0` → `1` → `2` → `3` para atualizar os dados processados, depois "
@@ -47,6 +56,11 @@ CARD_EVENTS_PATH = ROOT / "data" / "processed" / "keyword_tags" / "card_events_t
 RUN_MANIFEST_PATH = ROOT / "data" / "processed" / "keyword_tags" / "run_manifest.json"
 PLAYER_DATA_PATH = ROOT / "data" / "processed" / "keyword_tags" / "site_player_data.json"
 GAMES_PATH = ROOT / "data" / "interim" / "games.csv"
+VAR_MATCHES_PATH = ROOT / "data" / "processed" / "var_usage" / "match_var_usage.csv"
+VAR_SEASON_PATH = ROOT / "data" / "processed" / "var_usage" / "var_profile_by_season.csv"
+VAR_TEAM_PATH = ROOT / "data" / "processed" / "var_usage" / "var_profile_by_team.csv"
+VAR_REFEREE_PATH = ROOT / "data" / "processed" / "var_usage" / "var_profile_by_referee.csv"
+VAR_MANIFEST_PATH = ROOT / "data" / "processed" / "var_usage" / "run_manifest.json"
 '''))
 
 cells.append(md(
@@ -100,6 +114,39 @@ TEAM_ALIASES = {
     "vitória": "Vitória",
 }
 
+TEAM_COLORS = {
+    "Athletico-PR": ("#ff0302", "#000000"),
+    "Atlético-GO": ("#c8102e", "#000000"),
+    "Atlético-MG": ("#000000", "#ffffff"),
+    "Avaí": ("#00457c", "#ffffff"),
+    "Bahia": ("#0e3990", "#c8102e"),
+    "Botafogo": ("#000000", "#ffffff"),
+    "Ceará": ("#000000", "#ffffff"),
+    "Chapecoense": ("#26913f", "#ffffff"),
+    "Corinthians": ("#000000", "#ffffff"),
+    "Coritiba": ("#2f6657", "#ffffff"),
+    "Criciúma": ("#f4c300", "#000000"),
+    "Cruzeiro": ("#013992", "#ffffff"),
+    "Cuiabá": ("#0a6e33", "#f5b700"),
+    "Flamengo": ("#bd2418", "#000000"),
+    "Fluminense": ("#9d042d", "#046a38"),
+    "Fortaleza": ("#1c3f94", "#e2001a"),
+    "Goiás": ("#0d8a3e", "#ffffff"),
+    "Grêmio": ("#1a86bf", "#000000"),
+    "Internacional": ("#e40911", "#ffffff"),
+    "Juventude": ("#1c8a43", "#ffffff"),
+    "Mirassol": ("#f6ea17", "#0b6e2f"),
+    "Palmeiras": ("#0b683e", "#ffffff"),
+    "Red Bull Bragantino": ("#d72742", "#ffffff"),
+    "Remo": ("#2a375e", "#c8102e"),
+    "Santos": ("#000000", "#ffffff"),
+    "São Paulo": ("#ed1d23", "#000000"),
+    "Sport": ("#b0182f", "#000000"),
+    "Vasco": ("#000000", "#ffffff"),
+    "Vitória": ("#ff1505", "#000000"),
+    "América-MG": ("#0f8140", "#ffffff"),
+}
+
 STATE_SUFFIX = re.compile(r" - [A-Z]{2}$")
 
 
@@ -122,13 +169,18 @@ df = pd.read_csv(CARD_EVENTS_PATH, low_memory=False)
 manifest = json.loads(RUN_MANIFEST_PATH.read_text(encoding="utf-8"))
 player_data = json.loads(PLAYER_DATA_PATH.read_text(encoding="utf-8"))
 games_df = pd.read_csv(GAMES_PATH)
+var_matches_df = pd.read_csv(VAR_MATCHES_PATH)
+var_season_df = pd.read_csv(VAR_SEASON_PATH)
+var_team_df = pd.read_csv(VAR_TEAM_PATH)
+var_referee_df = pd.read_csv(VAR_REFEREE_PATH)
+var_manifest = json.loads(VAR_MANIFEST_PATH.read_text(encoding="utf-8"))
 
 TAG_ORDER = manifest["tags"]
 TAG_LABEL = {t: manifest["taxonomy"][t]["label"] for t in TAG_ORDER}
 CARD_CODE = {"yellow": "A", "second_yellow": "V2", "direct_red": "VD"}
 PERIOD_LABEL = {"1T": "1º tempo", "2T": "2º tempo"}
 
-len(df), len(player_data), len(games_df)
+len(df), len(player_data), len(games_df), len(var_matches_df)
 '''))
 
 cells.append(md(
@@ -153,16 +205,33 @@ def minute_label(period: str, minute: float, clock: object) -> str:
     return f"{base} · {m}\\'"
 
 
+PERIOD_RANK = {"1T": 0, "INT": 1, "2T": 2, "PJ": 3}
+
+
+def sort_minute(period: str, minute: float, clock: object) -> float:
+    if period in ("INT", "PJ") or pd.isna(minute):
+        return 0.0
+    return float(minute) + (45 if isinstance(clock, str) and clock.startswith("+") else 0)
+
+
 def build_match_data(frame: pd.DataFrame) -> list[dict]:
+    frame = frame.assign(
+        _period_rank=frame["period"].map(PERIOD_RANK).fillna(4),
+        _sort_minute=[
+            sort_minute(period, minute, clock)
+            for period, minute, clock in zip(frame["period"], frame["minute"], frame["clock"])
+        ],
+    )
+    frame = frame.sort_values(["game_id", "_period_rank", "_sort_minute"], kind="stable")
     matches = []
-    for game_id, grp in frame.sort_values("game_id").groupby("game_id", sort=True):
+    for game_id, grp in frame.groupby("game_id", sort=True):
         first = grp.iloc[0]
         events = []
         for _, row in grp.iterrows():
             tags = [TAG_LABEL[t] for t in TAG_ORDER if row.get(t) is True]
             reason = row["reason_reported"] if pd.notna(row["reason_reported"]) else ""
             events.append([
-                row["player"],
+                row["player"] if pd.notna(row["player"]) else "",
                 canon_team(row["team"]),
                 CARD_CODE[row["disciplinary_outcome"]],
                 reason,
@@ -175,7 +244,7 @@ def build_match_data(frame: pd.DataFrame) -> list[dict]:
             "date": str(first["match_date"]).strip(),
             "home": canon_team(first["home_team"]),
             "away": canon_team(first["away_team"]),
-            "ref": first["referee"],
+            "ref": first["referee"] if pd.notna(first["referee"]) else "",
             "events": events,
         })
     return matches
@@ -212,6 +281,7 @@ def build_site_data(frame: pd.DataFrame, games: pd.DataFrame) -> dict:
             "red_share": round(n_red / n_eventos, 4) if n_eventos else 0.0,
             "n_red": n_red,
         })
+    tags.sort(key=lambda row: -row["n_eventos"])
 
     reported = games[games["match_status"] == "played_with_report"].copy()
     reported["home_c"] = reported["home_team"].map(canon_team)
@@ -239,10 +309,18 @@ def build_site_data(frame: pd.DataFrame, games: pd.DataFrame) -> dict:
         return dict(sorted(out.items(), key=lambda kv: -kv[1]["total"]))
 
     return {
-        "manifest": {"events": total_events, "red_total": red_total},
+        "manifest": {
+            "events": total_events,
+            "red_total": red_total,
+            "latest_match_date": var_manifest["latest_match_date"],
+        },
         "tags": tags,
         "by_team": aggregate("team_c", team_games),
         "by_referee": aggregate("referee", ref_games),
+        "team_colors": {
+            name: {"primary": colors[0], "secondary": colors[1]}
+            for name, colors in TEAM_COLORS.items()
+        },
     }
 
 
@@ -251,7 +329,37 @@ site_data["manifest"], len(site_data["by_team"]), len(site_data["by_referee"])
 '''))
 
 cells.append(md(
-"## **5. `player-data`**",
+"## **5. `var-data`: menções ao VAR por temporada, time, árbitro e partida**",
+"",
+"Reúne as saídas do notebook `3`. Para os árbitros, o site mantém apenas quem possui mais de "
+"10 partidas, o mesmo corte usado nos gráficos comparativos."
+))
+
+cells.append(code('''
+var_data = {
+    "manifest": var_manifest,
+    "by_year": [
+        {"entity": str(int(row.entity)), "games": int(row.games), "var_games": int(row.var_games)}
+        for row in var_season_df.itertuples(index=False)
+    ],
+    "by_team": [
+        {"entity": str(row.entity), "games": int(row.games), "var_games": int(row.var_games)}
+        for row in var_team_df.itertuples(index=False)
+    ],
+    "by_referee": [
+        {"entity": str(row.entity), "games": int(row.games), "var_games": int(row.var_games)}
+        for row in var_referee_df.loc[var_referee_df["games"].gt(10)].itertuples(index=False)
+    ],
+    "matches_with_var": var_matches_df.loc[
+        var_matches_df["had_var"].eq(True), "game_id"
+    ].astype(str).tolist(),
+}
+
+len(var_data["by_year"]), len(var_data["by_team"]), len(var_data["by_referee"])
+'''))
+
+cells.append(md(
+"## **6. `player-data`**",
 "",
 "Já é gerado pelo notebook `2` em `data/processed/keyword_tags/site_player_data.json` "
 "(cartões, presenças e tags por jogador) — aqui só reaproveitamos o arquivo."
@@ -260,9 +368,9 @@ cells.append(md(
 cells.append(code("len(player_data), player_data[0]['name']"))
 
 cells.append(md(
-"## **6. Gravar no `index.html` da página**",
+"## **7. Gravar no `index.html` da página**",
 "",
-"Substitui só o conteúdo dos três blocos `<script id=\"...\" type=\"application/json\">`, mantendo "
+"Substitui só o conteúdo dos quatro blocos `<script id=\"...\" type=\"application/json\">`, mantendo "
 "todo o resto do arquivo (CSS, fontes, JS de renderização) intacto."
 ))
 
@@ -282,17 +390,18 @@ html = PAGE_HTML.read_text(encoding="utf-8")
 html = replace_block(html, "match-data", match_data)
 html = replace_block(html, "site-data", site_data)
 html = replace_block(html, "player-data", player_data)
+html = replace_block(html, "var-data", var_data)
 PAGE_HTML.write_text(html, encoding="utf-8")
 
 print(f"escrito em {PAGE_HTML}")
 print(f"partidas: {len(match_data)} | eventos: {site_data['manifest']['events']} | "
       f"vermelhos diretos: {site_data['manifest']['red_total']} | "
       f"times: {len(site_data['by_team'])} | árbitros: {len(site_data['by_referee'])} | "
-      f"jogadores: {len(player_data)}")
+      f"jogadores: {len(player_data)} | partidas VAR: {len(var_data['matches_with_var'])}")
 '''))
 
 cells.append(md(
-"## **7. Próximo passo**",
+"## **8. Próximo passo**",
 "",
 "Este notebook não faz commit nem push. Vá até `cbf-match-report-analysis-page`, confira o "
 "`git diff` e publique quando estiver satisfeito:",
@@ -324,6 +433,7 @@ nb = {
     "nbformat_minor": 5,
 }
 
-out = Path("/Users/gabrielcarbinatto/Documents/GitHub/cbf-match-report-analysis/notebooks/4-build_site.ipynb")
+root = Path(__file__).resolve().parents[1]
+out = root / "notebooks" / "4-build_site.ipynb"
 out.write_text(json.dumps(nb, ensure_ascii=False, indent=1), encoding="utf-8")
 print("wrote", out)
