@@ -257,22 +257,23 @@ len(match_data)
 cells.append(md(
 "## **4. `site-data`: agregados (manifest, tags, por time, por árbitro)**",
 "",
-"`red_total` e `n_red` contam só cartão vermelho direto (`disciplinary_outcome == \"direct_red\"`); "
-"o segundo amarelo (`second_yellow`) não entra nessa contagem — foi assim que validamos contra os "
-"números hoje publicados. `games` (partidas) vem de `games.csv` filtrado a `match_status == "
+"`red_total`, `n_red` e `red` incluem expulsões por segundo amarelo e vermelhos diretos. "
+"Nos agregados por time e árbitro, `yellow` conta os registros da seção de cartões amarelos e "
+"`red` conta os registros da seção de cartões vermelhos. `total` é a soma dessas duas seções. "
+"`games` (partidas) vem de `games.csv` filtrado a `match_status == "
 "\"played_with_report\"`, contando todas as partidas do time/árbitro, tenha havido cartão ou não."
 ))
 
 cells.append(code('''
 def build_site_data(frame: pd.DataFrame, games: pd.DataFrame) -> dict:
     total_events = len(frame)
-    red_total = int((frame["disciplinary_outcome"] == "direct_red").sum())
+    red_total = int(frame["disciplinary_outcome"].isin(["second_yellow", "direct_red"]).sum())
 
     tags = []
     for t in TAG_ORDER:
         sub = frame[frame[t] == True]  # noqa: E712
         n_eventos = len(sub)
-        n_red = int((sub["disciplinary_outcome"] == "direct_red").sum())
+        n_red = int(sub["disciplinary_outcome"].isin(["second_yellow", "direct_red"]).sum())
         tags.append({
             "tag": t,
             "label": TAG_LABEL[t],
@@ -300,9 +301,15 @@ def build_site_data(frame: pd.DataFrame, games: pd.DataFrame) -> dict:
         subset = frame[frame[group_col] != ""]
         for name, grp in subset.groupby(group_col):
             tag_counts = {t: int(grp[t].sum()) for t in TAG_ORDER if grp[t].sum() > 0}
+            yellow_records = int((grp["disciplinary_outcome"] == "yellow").sum())
+            second_yellows = int((grp["disciplinary_outcome"] == "second_yellow").sum())
+            direct_reds = int((grp["disciplinary_outcome"] == "direct_red").sum())
+            yellow = yellow_records
+            red = second_yellows + direct_reds
             out[name] = {
-                "total": len(grp),
-                "red": int((grp["disciplinary_outcome"] == "direct_red").sum()),
+                "total": yellow + red,
+                "yellow": yellow,
+                "red": red,
                 "tags": tag_counts,
                 "games": int(games_lookup.get(name, 0)),
             }
@@ -395,7 +402,7 @@ PAGE_HTML.write_text(html, encoding="utf-8")
 
 print(f"escrito em {PAGE_HTML}")
 print(f"partidas: {len(match_data)} | eventos: {site_data['manifest']['events']} | "
-      f"vermelhos diretos: {site_data['manifest']['red_total']} | "
+      f"cartões vermelhos: {site_data['manifest']['red_total']} | "
       f"times: {len(site_data['by_team'])} | árbitros: {len(site_data['by_referee'])} | "
       f"jogadores: {len(player_data)} | partidas VAR: {len(var_data['matches_with_var'])}")
 '''))
