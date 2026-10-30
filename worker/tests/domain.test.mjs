@@ -9,7 +9,7 @@ const compiled=ts.transpileModule(source,{
 }).outputText;
 const module={exports:{}};
 vm.runInNewContext(compiled,{module,exports:module.exports,console,Set,Map,JSON});
-const {optionalSeason,publicMatch,resolvePlayer,resolveTeam}=module.exports;
+const {optionalSeason,publicMatch,resolvePlayer,resolveSeasonPeriod,resolveTeam}=module.exports;
 
 const teamRows=[
   {alias:'Athletico Paranaense',team_name:'Athletico-PR'},
@@ -39,6 +39,56 @@ assert.equal(optionalSeason(2020),2020);
 assert.equal(optionalSeason(2026),2026);
 assert.throws(()=>optionalSeason(2027),/entre 2020 e 2026/);
 
+let boundsQuery='';
+const periodDb={
+  prepare(query){
+    boundsQuery=query;
+    return {first:async()=>({min_season:2020,max_season:2026})};
+  }
+};
+const latestPeriod=await resolveSeasonPeriod(periodDb,{ultimas_temporadas:2});
+assert.equal(latestPeriod.start,2025);
+assert.equal(latestPeriod.end,2026);
+assert.equal(latestPeriod.label,'2025–2026');
+assert.match(boundsQuery,/MAX\(season\)/);
+
+const singlePeriod=await resolveSeasonPeriod(periodDb,{temporada:2024});
+assert.equal(singlePeriod.start,2024);
+assert.equal(singlePeriod.end,2024);
+assert.equal(singlePeriod.label,'2024');
+
+const rangePeriod=await resolveSeasonPeriod(periodDb,{temporada_inicio:2022,temporada_fim:2025});
+assert.equal(rangePeriod.start,2022);
+assert.equal(rangePeriod.end,2025);
+assert.equal(rangePeriod.label,'2022–2025');
+
+const clampedPeriod=await resolveSeasonPeriod({
+  prepare(){return {first:async()=>({min_season:2023,max_season:2026})};}
+},{ultimas_temporadas:7});
+assert.equal(clampedPeriod.start,2023);
+assert.equal(clampedPeriod.end,2026);
+
+await assert.rejects(
+  ()=>resolveSeasonPeriod(periodDb,{temporada:2024,ultimas_temporadas:2}),
+  /apenas um recorte/
+);
+await assert.rejects(
+  ()=>resolveSeasonPeriod(periodDb,{temporada_inicio:2024}),
+  /temporada_inicio e temporada_fim/
+);
+await assert.rejects(
+  ()=>resolveSeasonPeriod(periodDb,{temporada_inicio:2025,temporada_fim:2024}),
+  /inicial não pode ser posterior/
+);
+await assert.rejects(
+  ()=>resolveSeasonPeriod(periodDb,{ultimas_temporadas:0}),
+  /entre 1 e 7/
+);
+await assert.rejects(
+  ()=>resolveSeasonPeriod({prepare(){return {first:async()=>({min_season:null,max_season:null})};}},{ultimas_temporadas:2}),
+  /Não há temporadas disponíveis/
+);
+
 const match=publicMatch({
   id:'1',season:2024,match_date:'2024-01-01',display_date:'01/01/2024',
   home_team:'Time A',away_team:'Time B',referee:'Árbitro',has_var:0,
@@ -53,4 +103,4 @@ const match=publicMatch({
 assert.equal(match.cartoes.segundos_amarelos,1);
 assert.deepEqual(Array.from(match.eventos,event=>event.tipo),['amarelo','segundo_amarelo','vermelho_direto']);
 
-console.log('Domain tests passed: fuzzy aliases, ambiguity, season bounds and public card types.');
+console.log('Domain tests passed: fuzzy aliases, ambiguity, dynamic periods and public card types.');

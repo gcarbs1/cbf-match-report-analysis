@@ -4,6 +4,8 @@ import vm from 'node:vm';
 
 const script=fs.readFileSync(new URL('../ai.js',import.meta.url),'utf8');
 assert.match(script,/cbf-sumulas-ai\.cbf-sumulas-ai-worker\.workers\.dev/);
+assert.match(script,/CHAT_TIMEOUT_MS=75_000/);
+assert.match(script,/new AbortController\(\)/);
 
 const makeElement=()=>{
   const handlers=new Map();
@@ -28,10 +30,16 @@ const document={
 };
 const requests=[];
 let failChat=false;
+let timeoutChat=false;
 const fetch=async(url,options={})=>{
   requests.push({url,options});
   if(url.endsWith('/health'))return {ok:true,json:async()=>({ok:true})};
   if(failChat)throw new TypeError('Failed to fetch');
+  if(timeoutChat){
+    const error=new Error('The operation was aborted.');
+    error.name='AbortError';
+    throw error;
+  }
   return {ok:true,json:async()=>({
     answer:'**Anderson Daronco** apitou Corinthians × Palmeiras em 03/09/2023.',
     sources:[{id:'2023-foo',title:'Corinthians × Palmeiras',date:'03/09/2023',year:2023}]
@@ -65,5 +73,15 @@ await new Promise(resolve=>setTimeout(resolve,10));
 const failureRendered=elements.get('aiMessages').children.map(child=>child.innerHTML).join('\n');
 assert.match(failureRendered,/Não foi possível conectar ao serviço de AI/);
 assert.doesNotMatch(failureRendered,/Failed to fetch/);
+assert.equal(elements.get('aiStatus').textContent,'AI indisponível');
 
-console.log('AI frontend smoke test passed: health, chat, evidence and friendly network failure.');
+failChat=false;
+timeoutChat=true;
+elements.get('aiInput').value='quantos cartões tomou Gustavo Gómez?';
+elements.get('aiForm').handlers.get('submit')({preventDefault(){}});
+await new Promise(resolve=>setTimeout(resolve,10));
+const timeoutRendered=elements.get('aiMessages').children.map(child=>child.innerHTML).join('\n');
+assert.match(timeoutRendered,/A consulta ultrapassou 75 segundos/);
+assert.equal(elements.get('aiStatus').textContent,'AI lenta');
+
+console.log('AI frontend smoke test passed: health, chat, evidence, network failure and timeout states.');

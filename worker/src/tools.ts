@@ -1,4 +1,5 @@
-import {DomainError,integer,matchSource,MAX_SEASON,MIN_SEASON,optionalSeason,PERIOD_LABEL,publicMatch,resolvePlayer,resolveReferee,resolveTeam,safeJson,uniqueSources} from './domain';
+import {DomainError,integer,matchSource,MAX_SEASON,MIN_SEASON,publicMatch,resolvePlayer,resolveReferee,resolveSeasonPeriod,resolveTeam,safeJson,uniqueSources} from './domain';
+import type {SeasonPeriod} from './domain';
 import type {AiToolDefinition,JsonObject,MatchEvent,MatchRow,Source,ToolExecution} from './types';
 
 const objectSchema=(properties:JsonObject,required:string[]=[]):JsonObject=>({
@@ -6,6 +7,17 @@ const objectSchema=(properties:JsonObject,required:string[]=[]):JsonObject=>({
 });
 const seasonParameter=(description=`Ano da temporada entre ${MIN_SEASON} e ${MAX_SEASON}.`):JsonObject=>({
   type:'integer',minimum:MIN_SEASON,maximum:MAX_SEASON,description
+});
+const periodParameters=():JsonObject=>({
+  temporada:seasonParameter('Temporada exata. Não combinar com intervalo ou últimas temporadas.'),
+  temporada_inicio:seasonParameter('Primeira temporada de um intervalo inclusivo. Use junto com temporada_fim.'),
+  temporada_fim:seasonParameter('Última temporada de um intervalo inclusivo. Use junto com temporada_inicio.'),
+  ultimas_temporadas:{
+    type:'integer',
+    minimum:1,
+    maximum:MAX_SEASON-MIN_SEASON+1,
+    description:'Quantidade de temporadas mais recentes disponíveis no acervo. Use para pedidos como “nos últimos 2 anos”; não combine com outros filtros de temporada.'
+  }
 });
 const limitParameter=(description:string):JsonObject=>({type:'integer',minimum:1,maximum:10,description});
 
@@ -18,7 +30,7 @@ export const TOOL_DEFINITIONS:AiToolDefinition[]=[
       parameters:objectSchema({
         time_1:{type:'string',description:'Primeiro time citado pelo usuário.'},
         time_2:{type:'string',description:'Segundo time, quando a pergunta for sobre um confronto.'},
-        temporada:seasonParameter(),
+        ...periodParameters(),
         data:{type:'string',pattern:'^\\d{2}/\\d{2}/\\d{4}$',description:'Data exata no formato DD/MM/AAAA, se mencionada.'},
         limite:limitParameter('Quantidade máxima de partidas.')
       },['time_1'])
@@ -31,7 +43,7 @@ export const TOOL_DEFINITIONS:AiToolDefinition[]=[
       description:'Calcula jogos, cartões totais, amarelos, vermelhos e médias por jogo para um ou mais times. Use para comparação, estatística ou resumo disciplinar de time.',
       parameters:objectSchema({
         times:{type:'array',items:{type:'string'},minItems:1,maxItems:5,description:'Times a analisar ou comparar.'},
-        temporada:seasonParameter('Ano da temporada. Omitir para o acervo completo.')
+        ...periodParameters()
       },['times'])
     }
   },
@@ -42,7 +54,7 @@ export const TOOL_DEFINITIONS:AiToolDefinition[]=[
       description:'Ranqua todos os times por cartões totais, amarelos, vermelhos ou média por jogo, com filtro opcional de temporada.',
       parameters:objectSchema({
         metrica:{type:'string',enum:['cartoes','amarelos','vermelhos','media'],description:'Métrica usada na ordenação.'},
-        temporada:seasonParameter(),
+        ...periodParameters(),
         minimo_partidas:{type:'integer',minimum:1,maximum:50,description:'Mínimo de partidas para entrar no ranking.'},
         limite:limitParameter('Quantidade de times no ranking.')
       },['metrica'])
@@ -55,7 +67,7 @@ export const TOOL_DEFINITIONS:AiToolDefinition[]=[
       description:'Encontra partidas com mais cartões totais, amarelos ou vermelhos, no acervo inteiro ou filtradas por temporada e time.',
       parameters:objectSchema({
         metrica:{type:'string',enum:['cartoes','amarelos','vermelhos'],description:'Métrica usada na ordenação.'},
-        temporada:seasonParameter(),
+        ...periodParameters(),
         time:{type:'string',description:'Time opcional para limitar o ranking.'},
         limite:limitParameter('Quantidade de posições no ranking.')
       },['metrica'])
@@ -68,7 +80,7 @@ export const TOOL_DEFINITIONS:AiToolDefinition[]=[
       description:'Analisa um árbitro: partidas apitadas, cartões, média, VAR e categorias disciplinares mais recorrentes.',
       parameters:objectSchema({
         arbitro:{type:'string',description:'Nome do árbitro, mesmo que aproximado.'},
-        temporada:seasonParameter()
+        ...periodParameters()
       },['arbitro'])
     }
   },
@@ -79,7 +91,7 @@ export const TOOL_DEFINITIONS:AiToolDefinition[]=[
       description:'Ranqua árbitros por total ou média de cartões distribuídos, com filtro opcional de temporada.',
       parameters:objectSchema({
         criterio:{type:'string',enum:['total','media'],description:'Critério de ordenação.'},
-        temporada:seasonParameter(),
+        ...periodParameters(),
         minimo_partidas:{type:'integer',minimum:1,maximum:50,description:'Mínimo de jogos para entrar no ranking. Recomendado 5 para médias.'},
         limite:limitParameter('Quantidade de árbitros no ranking.')
       },['criterio'])
@@ -89,9 +101,10 @@ export const TOOL_DEFINITIONS:AiToolDefinition[]=[
     type:'function',
     function:{
       name:'perfil_jogador',
-      description:'Consulta o perfil disciplinar consolidado de um jogador: aparições, cartões, times e categorias.',
+      description:'Consulta o perfil disciplinar de um jogador: cartões, times e categorias, no acervo completo ou em um período.',
       parameters:objectSchema({
-        jogador:{type:'string',description:'Nome ou apelido do jogador, mesmo que aproximado.'}
+        jogador:{type:'string',description:'Nome ou apelido do jogador, mesmo que aproximado.'},
+        ...periodParameters()
       },['jogador'])
     }
   },
@@ -99,10 +112,11 @@ export const TOOL_DEFINITIONS:AiToolDefinition[]=[
     type:'function',
     function:{
       name:'ranquear_jogadores',
-      description:'Ranqua jogadores por cartões totais, amarelos ou vermelhos no período completo. Pode filtrar pelo time em que atuaram.',
+      description:'Ranqua jogadores por cartões totais, amarelos ou vermelhos. Pode filtrar pelo período e pelo time em que atuaram.',
       parameters:objectSchema({
         metrica:{type:'string',enum:['cartoes','amarelos','vermelhos'],description:'Métrica usada na ordenação.'},
         time:{type:'string',description:'Time opcional.'},
+        ...periodParameters(),
         limite:limitParameter('Quantidade de jogadores no ranking.')
       },['metrica'])
     }
@@ -111,12 +125,29 @@ export const TOOL_DEFINITIONS:AiToolDefinition[]=[
 
 const argsObject=(value:unknown):JsonObject=>value&&typeof value==='object'&&!Array.isArray(value)?value as JsonObject:{};
 const textArg=(args:JsonObject,key:string):string=>String(args[key]??'').trim();
+const resolvePeriod=(db:D1Database,args:JsonObject):Promise<SeasonPeriod>=>resolveSeasonPeriod(db,{
+  temporada:args.temporada,
+  temporada_inicio:args.temporada_inicio,
+  temporada_fim:args.temporada_fim,
+  ultimas_temporadas:args.ultimas_temporadas
+});
+const periodFilter=(period:SeasonPeriod,column='season'):{sql:string;bindings:number[]}=>{
+  if(period.start===undefined||period.end===undefined)return {sql:'',bindings:[]};
+  if(period.start===period.end)return {sql:`${column} = ?`,bindings:[period.start]};
+  return {sql:`${column} BETWEEN ? AND ?`,bindings:[period.start,period.end]};
+};
+const periodSelection=(period:SeasonPeriod):JsonObject=>{
+  if(period.start===undefined||period.end===undefined)return {periodo:period.label};
+  if(period.start===period.end)return {periodo:period.label,temporada:period.start};
+  return {periodo:period.label,temporada_inicio:period.start,temporada_fim:period.end};
+};
 
 const findMatches=async(db:D1Database,raw:unknown):Promise<ToolExecution>=>{
   const args=argsObject(raw);
   const first=await resolveTeam(db,args.time_1);
   const second=args.time_2?await resolveTeam(db,args.time_2):undefined;
-  const season=optionalSeason(args.temporada);
+  const period=await resolvePeriod(db,args);
+  const seasonFilter=periodFilter(period);
   const limit=integer(args.limite,{min:1,max:10,fallback:6});
   const conditions:string[]=[];
   const bindings:unknown[]=[];
@@ -127,7 +158,7 @@ const findMatches=async(db:D1Database,raw:unknown):Promise<ToolExecution>=>{
     conditions.push('(home_team = ? OR away_team = ?)');
     bindings.push(first,first);
   }
-  if(season){conditions.push('season = ?');bindings.push(season);}
+  if(seasonFilter.sql){conditions.push(seasonFilter.sql);bindings.push(...seasonFilter.bindings);}
   const date=textArg(args,'data');
   if(date){
     if(!/^\d{2}\/\d{2}\/\d{4}$/.test(date))throw new DomainError('A data deve estar no formato DD/MM/AAAA.');
@@ -138,7 +169,7 @@ const findMatches=async(db:D1Database,raw:unknown):Promise<ToolExecution>=>{
   return {
     name:'buscar_partidas',
     data:{
-      consulta:{time_1:first,...(second?{time_2:second}:{}),...(season?{temporada:season}:{}),...(date?{data:date}:{})},
+      consulta:{time_1:first,...(second?{time_2:second}:{}),...periodSelection(period),...(date?{data:date}:{})},
       quantidade:results.length,
       partidas:results.map(row=>publicMatch(row,true))
     },
@@ -152,10 +183,10 @@ interface TeamStatsRow {
   red:number;
 }
 
-const teamStats=async(db:D1Database,team:string,season?:number)=>{
-  const seasonSql=season?' AND season = ?':'';
-  const bindings:unknown[]=[team,team,team,team];
-  if(season)bindings.push(season);
+const teamStats=async(db:D1Database,team:string,period:SeasonPeriod)=>{
+  const filter=periodFilter(period);
+  const seasonSql=filter.sql?` AND ${filter.sql}`:'';
+  const bindings:unknown[]=[team,team,team,team,...filter.bindings];
   const row=await db.prepare(`
     SELECT
       COUNT(*) AS games,
@@ -180,11 +211,11 @@ const teamStats=async(db:D1Database,team:string,season?:number)=>{
   };
 };
 
-const comparisonSources=async(db:D1Database,teams:string[],season?:number):Promise<Source[]>=>{
+const comparisonSources=async(db:D1Database,teams:string[],period:SeasonPeriod):Promise<Source[]>=>{
   const placeholders=teams.map(()=>'?').join(',');
-  const seasonSql=season?' AND season = ?':'';
-  const bindings:unknown[]=[...teams,...teams];
-  if(season)bindings.push(season);
+  const filter=periodFilter(period);
+  const seasonSql=filter.sql?` AND ${filter.sql}`:'';
+  const bindings:unknown[]=[...teams,...teams,...filter.bindings];
   const {results}=await db.prepare(`
     SELECT * FROM matches
     WHERE (home_team IN (${placeholders}) OR away_team IN (${placeholders}))${seasonSql}
@@ -203,13 +234,13 @@ const compareTeams=async(db:D1Database,raw:unknown):Promise<ToolExecution>=>{
     const resolved=await resolveTeam(db,value);
     if(!teams.includes(resolved))teams.push(resolved);
   }
-  const season=optionalSeason(args.temporada);
+  const period=await resolvePeriod(db,args);
   const rows=[];
-  for(const team of teams)rows.push(await teamStats(db,team,season));
+  for(const team of teams)rows.push(await teamStats(db,team,period));
   return {
     name:'comparar_times',
-    data:{periodo:season?String(season):PERIOD_LABEL,times:rows},
-    sources:await comparisonSources(db,teams,season)
+    data:{periodo:period.label,times:rows},
+    sources:await comparisonSources(db,teams,period)
   };
 };
 
@@ -233,11 +264,12 @@ const rankTeams=async(db:D1Database,raw:unknown):Promise<ToolExecution>=>{
   };
   const order=orderBy[metric];
   if(!order)throw new DomainError('Métrica inválida para o ranking de times.');
-  const season=optionalSeason(args.temporada);
+  const period=await resolvePeriod(db,args);
+  const filter=periodFilter(period);
   const minimum=integer(args.minimo_partidas,{min:1,max:50,fallback:metric==='media'?5:1});
   const limit=integer(args.limite,{min:1,max:10,fallback:5});
-  const seasonSql=season?'WHERE season = ?':'';
-  const bindings:unknown[]=season?[season]:[];
+  const seasonSql=filter.sql?`WHERE ${filter.sql}`:'';
+  const bindings:unknown[]=[...filter.bindings];
   const {results}=await db.prepare(`
     WITH team_matches AS (
       SELECT season, home_team AS team, home_yellow_cards AS yellow, home_red_cards AS red FROM matches
@@ -257,7 +289,7 @@ const rankTeams=async(db:D1Database,raw:unknown):Promise<ToolExecution>=>{
     name:'ranquear_times',
     data:{
       metrica:metric,
-      periodo:season?String(season):PERIOD_LABEL,
+      periodo:period.label,
       minimo_partidas:minimum,
       times:results.map(row=>({
         time:row.team,
@@ -268,7 +300,7 @@ const rankTeams=async(db:D1Database,raw:unknown):Promise<ToolExecution>=>{
         cartoes_por_jogo:Number(row.average)
       }))
     },
-    sources:teams.length?await comparisonSources(db,teams,season):[]
+    sources:teams.length?await comparisonSources(db,teams,period):[]
   };
 };
 
@@ -278,18 +310,19 @@ const rankMatches=async(db:D1Database,raw:unknown):Promise<ToolExecution>=>{
   const metricColumn:Record<string,string>={cartoes:'total_cards',amarelos:'yellow_cards',vermelhos:'red_cards'};
   const column=metricColumn[metric];
   if(!column)throw new DomainError('Métrica inválida para o ranking de partidas.');
-  const season=optionalSeason(args.temporada);
+  const period=await resolvePeriod(db,args);
+  const filter=periodFilter(period);
   const team=args.time?await resolveTeam(db,args.time):undefined;
   const limit=integer(args.limite,{min:1,max:10,fallback:5});
   const conditions:string[]=[];
   const bindings:unknown[]=[];
-  if(season){conditions.push('season = ?');bindings.push(season);}
+  if(filter.sql){conditions.push(filter.sql);bindings.push(...filter.bindings);}
   if(team){conditions.push('(home_team = ? OR away_team = ?)');bindings.push(team,team);}
   const where=conditions.length?`WHERE ${conditions.join(' AND ')}`:'';
   const {results}=await db.prepare(`SELECT * FROM matches ${where} ORDER BY ${column} DESC, total_cards DESC, match_date DESC LIMIT ?`).bind(...bindings,limit).all<MatchRow>();
   return {
     name:'ranquear_partidas',
-    data:{metrica:metric,periodo:season?String(season):PERIOD_LABEL,...(team?{time:team}:{}),partidas:results.map(row=>publicMatch(row,false))},
+    data:{metrica:metric,periodo:period.label,...(team?{time:team}:{}),partidas:results.map(row=>publicMatch(row,false))},
     sources:results.map(matchSource)
   };
 };
@@ -297,10 +330,10 @@ const rankMatches=async(db:D1Database,raw:unknown):Promise<ToolExecution>=>{
 const refereeProfile=async(db:D1Database,raw:unknown):Promise<ToolExecution>=>{
   const args=argsObject(raw);
   const referee=await resolveReferee(db,args.arbitro);
-  const season=optionalSeason(args.temporada);
-  const seasonSql=season?' AND season = ?':'';
-  const bindings:unknown[]=[referee];
-  if(season)bindings.push(season);
+  const period=await resolvePeriod(db,args);
+  const filter=periodFilter(period);
+  const seasonSql=filter.sql?` AND ${filter.sql}`:'';
+  const bindings:unknown[]=[referee,...filter.bindings];
   const {results}=await db.prepare(`SELECT * FROM matches WHERE referee = ?${seasonSql} ORDER BY match_date DESC`).bind(...bindings).all<MatchRow>();
   const tagCounts=new Map<string,number>();
   for(const row of results){
@@ -318,7 +351,7 @@ const refereeProfile=async(db:D1Database,raw:unknown):Promise<ToolExecution>=>{
     name:'perfil_arbitro',
     data:{
       arbitro:referee,
-      periodo:season?String(season):PERIOD_LABEL,
+      periodo:period.label,
       partidas:results.length,
       cartoes:total,
       amarelos:yellow,
@@ -346,11 +379,12 @@ const rankReferees=async(db:D1Database,raw:unknown):Promise<ToolExecution>=>{
   const args=argsObject(raw);
   const criterion=textArg(args,'criterio');
   if(!['total','media'].includes(criterion))throw new DomainError('Critério inválido para o ranking de árbitros.');
-  const season=optionalSeason(args.temporada);
+  const period=await resolvePeriod(db,args);
+  const filter=periodFilter(period);
   const minimum=integer(args.minimo_partidas,{min:1,max:50,fallback:criterion==='media'?5:1});
   const limit=integer(args.limite,{min:1,max:10,fallback:5});
-  const seasonSql=season?'WHERE season = ?':'';
-  const bindings:unknown[]=season?[season]:[];
+  const seasonSql=filter.sql?`WHERE ${filter.sql}`:'';
+  const bindings:unknown[]=[...filter.bindings];
   const order=criterion==='media'?'average DESC, cards DESC':'cards DESC, average DESC';
   const {results}=await db.prepare(`
     SELECT referee, COUNT(*) AS games, SUM(total_cards) AS cards, SUM(yellow_cards) AS yellow,
@@ -365,15 +399,14 @@ const rankReferees=async(db:D1Database,raw:unknown):Promise<ToolExecution>=>{
   let sources:Source[]=[];
   if(refereeNames.length){
     const placeholders=refereeNames.map(()=>'?').join(',');
-    const sourceSeasonSql=season?' AND season = ?':'';
-    const sourceBindings:unknown[]=[...refereeNames];
-    if(season)sourceBindings.push(season);
+    const sourceSeasonSql=filter.sql?` AND ${filter.sql}`:'';
+    const sourceBindings:unknown[]=[...refereeNames,...filter.bindings];
     const evidence=await db.prepare(`SELECT * FROM matches WHERE referee IN (${placeholders})${sourceSeasonSql} ORDER BY total_cards DESC, match_date DESC LIMIT 8`).bind(...sourceBindings).all<MatchRow>();
     sources=evidence.results.map(matchSource);
   }
   return {
     name:'ranquear_arbitros',
-    data:{criterio:criterion,periodo:season?String(season):PERIOD_LABEL,minimo_partidas:minimum,arbitros:results.map(row=>({arbitro:row.referee,partidas:Number(row.games),cartoes:Number(row.cards),amarelos:Number(row.yellow),vermelhos:Number(row.red),cartoes_por_jogo:Number(row.average)}))},
+    data:{criterio:criterion,periodo:period.label,minimo_partidas:minimum,arbitros:results.map(row=>({arbitro:row.referee,partidas:Number(row.games),cartoes:Number(row.cards),amarelos:Number(row.yellow),vermelhos:Number(row.red),cartoes_por_jogo:Number(row.average)}))},
     sources
   };
 };
@@ -399,23 +432,81 @@ const playerProfile=async(db:D1Database,raw:unknown):Promise<ToolExecution>=>{
   const lookup=await resolvePlayer(db,args.jogador);
   const player=await db.prepare('SELECT * FROM players WHERE id = ? LIMIT 1').bind(lookup.id).first<PlayerRow>();
   if(!player)throw new DomainError(`Não encontrei “${textArg(args,'jogador')}” no acervo.`);
+  const period=await resolvePeriod(db,args);
   const playerTeams=safeJson<string[]>(player.teams_json,[]);
   const teamPlaceholders=playerTeams.map(()=>'?').join(',');
   const teamFilter=teamPlaceholders?` AND card_events.team IN (${teamPlaceholders})`:'';
+  const filter=periodFilter(period,'matches.season');
+  const seasonFilter=filter.sql?` AND ${filter.sql}`:'';
   const evidence=await db.prepare(`
     SELECT DISTINCT matches.*
     FROM matches
     JOIN card_events ON card_events.match_id = matches.id
-    WHERE card_events.player = ?${teamFilter}
+    WHERE card_events.player = ?${teamFilter}${seasonFilter}
     ORDER BY matches.match_date DESC
     LIMIT 6
-  `).bind(player.full_name,...playerTeams).all<MatchRow>();
+  `).bind(player.full_name,...playerTeams,...filter.bindings).all<MatchRow>();
+
+  if(period.start!==undefined){
+    const periodBindings:unknown[]=[player.full_name,...playerTeams,...filter.bindings];
+    const totals=await db.prepare(`
+      SELECT
+        COUNT(DISTINCT card_events.match_id) AS card_games,
+        COUNT(*) AS cards,
+        COALESCE(SUM(CASE WHEN card_events.card_type = 'A' THEN 1 ELSE 0 END), 0) AS yellow,
+        COALESCE(SUM(CASE WHEN card_events.card_type = 'V2' THEN 1 ELSE 0 END), 0) AS second_yellow,
+        COALESCE(SUM(CASE WHEN card_events.card_type = 'VD' THEN 1 ELSE 0 END), 0) AS direct_red,
+        COALESCE(SUM(CASE WHEN card_events.card_type IN ('V2', 'VD') THEN 1 ELSE 0 END), 0) AS red
+      FROM card_events
+      JOIN matches ON matches.id = card_events.match_id
+      WHERE card_events.player = ?${teamFilter}${seasonFilter}
+    `).bind(...periodBindings).first<Pick<PlayerRow,'card_games'|'cards'|'yellow'|'second_yellow'|'direct_red'|'red'>>();
+    const {results:teams}=await db.prepare(`
+      SELECT card_events.team AS team
+      FROM card_events
+      JOIN matches ON matches.id = card_events.match_id
+      WHERE card_events.player = ?${teamFilter}${seasonFilter}
+      GROUP BY card_events.team
+      ORDER BY card_events.team
+    `).bind(...periodBindings).all<{team:string}>();
+    const {results:categories}=await db.prepare(`
+      SELECT tags.value AS categoria, COUNT(*) AS total,
+        SUM(CASE WHEN card_events.card_type = 'A' THEN 1 ELSE 0 END) AS amarelos,
+        SUM(CASE WHEN card_events.card_type IN ('V2', 'VD') THEN 1 ELSE 0 END) AS vermelhos
+      FROM card_events
+      JOIN matches ON matches.id = card_events.match_id
+      JOIN json_each(card_events.tags_json) AS tags
+      WHERE card_events.player = ?${teamFilter}${seasonFilter}
+      GROUP BY tags.value
+      ORDER BY total DESC, tags.value ASC
+      LIMIT 10
+    `).bind(...periodBindings).all<{categoria:string;total:number;amarelos:number;vermelhos:number}>();
+    return {
+      name:'perfil_jogador',
+      data:{
+        jogador:player.name,
+        nome_completo:player.full_name,
+        periodo:period.label,
+        times:teams.map(row=>row.team),
+        partidas_com_cartao:Number(totals?.card_games??0),
+        cartoes:Number(totals?.cards??0),
+        amarelos:Number(totals?.yellow??0),
+        segundos_amarelos:Number(totals?.second_yellow??0),
+        vermelhos_diretos:Number(totals?.direct_red??0),
+        vermelhos:Number(totals?.red??0),
+        categorias:categories.map(row=>({categoria:row.categoria,total:Number(row.total),amarelos:Number(row.amarelos),vermelhos:Number(row.vermelhos)}))
+      },
+      sources:evidence.results.map(matchSource)
+    };
+  }
+
   const tags=safeJson<Array<[string,number,number,number]>>(player.tags_json,[]).slice(0,10).map(tag=>({categoria:tag[0],total:tag[1],amarelos:tag[2],vermelhos:tag[3]}));
   return {
     name:'perfil_jogador',
     data:{
       jogador:player.name,
       nome_completo:player.full_name,
+      periodo:period.label,
       times:playerTeams,
       aparicoes:Number(player.appearances),
       partidas_com_cartao:Number(player.card_games),
@@ -435,23 +526,27 @@ interface PlayerRankingRow {
   name:string;
   full_name:string;
   teams_json:string;
+  period_teams?:string;
   card_games:number;
   cards:number;
   yellow:number;
   red:number;
 }
 
-const playerRankingSources=async(db:D1Database,players:PlayerRankingRow[],team?:string):Promise<Source[]>=>{
+const playerRankingSources=async(db:D1Database,players:PlayerRankingRow[],period:SeasonPeriod,team?:string):Promise<Source[]>=>{
   if(!players.length)return [];
   const placeholders=players.map(()=>'?').join(',');
   const teamSql=team?' AND card_events.team = ?':'';
   const bindings:unknown[]=[...players.map(player=>player.full_name)];
   if(team)bindings.push(team);
+  const filter=periodFilter(period,'matches.season');
+  const seasonSql=filter.sql?` AND ${filter.sql}`:'';
+  bindings.push(...filter.bindings);
   const {results}=await db.prepare(`
     SELECT DISTINCT matches.*
     FROM matches
     JOIN card_events ON card_events.match_id = matches.id
-    WHERE card_events.player IN (${placeholders})${teamSql}
+    WHERE card_events.player IN (${placeholders})${teamSql}${seasonSql}
     ORDER BY matches.total_cards DESC, matches.match_date DESC
     LIMIT 8
   `).bind(...bindings).all<MatchRow>();
@@ -464,10 +559,35 @@ const rankPlayers=async(db:D1Database,raw:unknown):Promise<ToolExecution>=>{
   const metricKey:Record<string,'cards'|'yellow'|'red'>={cartoes:'cards',amarelos:'yellow',vermelhos:'red'};
   const key=metricKey[metric];
   if(!key)throw new DomainError('Métrica inválida para o ranking de jogadores.');
+  const period=await resolvePeriod(db,args);
+  const filter=periodFilter(period,'matches.season');
   const team=args.time?await resolveTeam(db,args.time):undefined;
   const limit=integer(args.limite,{min:1,max:10,fallback:5});
   let ranked:PlayerRankingRow[];
-  if(team){
+  if(period.start!==undefined){
+    const conditions:string[]=[];
+    const bindings:unknown[]=[];
+    if(team){conditions.push('card_events.team = ?');bindings.push(team);}
+    if(filter.sql){conditions.push(filter.sql);bindings.push(...filter.bindings);}
+    const where=conditions.length?`WHERE ${conditions.join(' AND ')}`:'';
+    const {results}=await db.prepare(`
+      SELECT players.id, players.name, players.full_name, players.teams_json,
+        GROUP_CONCAT(DISTINCT card_events.team) AS period_teams,
+        COUNT(DISTINCT card_events.match_id) AS card_games,
+        COUNT(*) AS cards,
+        SUM(CASE WHEN card_events.card_type = 'A' THEN 1 ELSE 0 END) AS yellow,
+        SUM(CASE WHEN card_events.card_type IN ('V2', 'VD') THEN 1 ELSE 0 END) AS red
+      FROM card_events
+      JOIN matches ON matches.id = card_events.match_id
+      JOIN players ON players.full_name = card_events.player
+        AND EXISTS (SELECT 1 FROM json_each(players.teams_json) WHERE value = card_events.team)
+      ${where}
+      GROUP BY players.id, players.name, players.full_name, players.teams_json
+      ORDER BY ${key} DESC, cards DESC, players.name ASC
+      LIMIT ?
+    `).bind(...bindings,limit).all<PlayerRankingRow>();
+    ranked=results;
+  }else if(team){
     const {results}=await db.prepare(`
       SELECT players.id, players.name, players.full_name, players.teams_json,
         COUNT(DISTINCT card_events.match_id) AS card_games,
@@ -494,8 +614,18 @@ const rankPlayers=async(db:D1Database,raw:unknown):Promise<ToolExecution>=>{
   }
   return {
     name:'ranquear_jogadores',
-    data:{metrica:metric,periodo:PERIOD_LABEL,...(team?{time:team}:{}),jogadores:ranked.map(player=>({jogador:player.name,nome_completo:player.full_name,times:safeJson<string[]>(player.teams_json,[]),partidas_com_cartao:Number(player.card_games),cartoes:Number(player.cards),amarelos:Number(player.yellow),vermelhos:Number(player.red)}))},
-    sources:await playerRankingSources(db,ranked,team)
+    data:{metrica:metric,periodo:period.label,...(team?{time:team}:{}),jogadores:ranked.map(player=>({
+      jogador:player.name,
+      nome_completo:player.full_name,
+      times:period.start===undefined
+        ?safeJson<string[]>(player.teams_json,[])
+        :String(player.period_teams??'').split(',').filter(Boolean).sort((left,right)=>left.localeCompare(right,'pt-BR')),
+      partidas_com_cartao:Number(player.card_games),
+      cartoes:Number(player.cards),
+      amarelos:Number(player.yellow),
+      vermelhos:Number(player.red)
+    }))},
+    sources:await playerRankingSources(db,ranked,period,team)
   };
 };
 

@@ -2,6 +2,8 @@
 'use strict';
 
 const API_ENDPOINT='https://cbf-sumulas-ai.cbf-sumulas-ai-worker.workers.dev';
+const CHAT_TIMEOUT_MS=75_000;
+const SLOW_QUERY_NOTICE_MS=12_000;
 const ui={
   messages:document.getElementById('aiMessages'),
   form:document.getElementById('aiForm'),
@@ -68,7 +70,7 @@ function setStatus(text,state=''){
   ui.status.classList.toggle('loading',state==='loading');
 }
 
-async function fetchWithTimeout(path,options={},timeout=45_000){
+async function fetchWithTimeout(path,options={},timeout=CHAT_TIMEOUT_MS){
   const controller=new AbortController();
   const timer=setTimeout(()=>controller.abort(),timeout);
   try{return await fetch(API_ENDPOINT+path,{...options,signal:controller.signal});}
@@ -98,6 +100,7 @@ async function submit(question){
   addMessage('user','<p>'+clean(message)+'</p>');
   const thinking=addThinking();
   setStatus('Consultando','loading');
+  const slowQueryNotice=setTimeout(()=>setStatus('Ainda consultando','loading'),SLOW_QUERY_NOTICE_MS);
   try{
     const response=await fetchWithTimeout('/chat',{
       method:'POST',
@@ -116,13 +119,14 @@ async function submit(question){
     const timedOut=error?.name==='AbortError';
     const networkFailure=error?.name==='TypeError'&&/fetch|network|load failed/i.test(error.message||'');
     const detail=timedOut
-      ?'A resposta demorou mais que o esperado. Tente novamente.'
+      ?'A consulta ultrapassou 75 segundos. O serviço pode estar lento; tente novamente.'
       :networkFailure
         ?'Não foi possível conectar ao serviço de AI. Verifique sua internet e tente novamente.'
         :error.message;
     addMessage('assistant','<p><strong>Não consegui concluir a consulta.</strong></p><p>'+clean(detail)+'</p>');
-    setStatus('AI indisponível');
+    setStatus(timedOut?'AI lenta':'AI indisponível');
   }finally{
+    clearTimeout(slowQueryNotice);
     busy=false;
     ui.send.disabled=false;
     ui.form.removeAttribute('aria-busy');

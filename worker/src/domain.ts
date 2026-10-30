@@ -124,6 +124,81 @@ export const optionalSeason=(value:unknown):number|undefined=>{
   return parsed;
 };
 
+export interface SeasonPeriodInput {
+  temporada?:unknown;
+  temporada_inicio?:unknown;
+  temporada_fim?:unknown;
+  ultimas_temporadas?:unknown;
+}
+
+export interface SeasonPeriod {
+  start:number|undefined;
+  end:number|undefined;
+  label:string;
+}
+
+interface SeasonBoundsRow {
+  min_season:number|null;
+  max_season:number|null;
+}
+
+const hasPeriodValue=(value:unknown):boolean=>value!==undefined&&value!==null&&value!=='';
+
+const boundedSeasonPeriod=(start:number,end:number):SeasonPeriod=>({
+  start,
+  end,
+  label:start===end?String(start):`${start}–${end}`
+});
+
+export const resolveSeasonPeriod=async(db:D1Database,input:SeasonPeriodInput):Promise<SeasonPeriod>=>{
+  const hasSeason=hasPeriodValue(input.temporada);
+  const hasStart=hasPeriodValue(input.temporada_inicio);
+  const hasEnd=hasPeriodValue(input.temporada_fim);
+  const hasLatest=hasPeriodValue(input.ultimas_temporadas);
+
+  const selectedModes=Number(hasSeason)+Number(hasStart||hasEnd)+Number(hasLatest);
+  if(selectedModes>1){
+    throw new DomainError('Use apenas um recorte: temporada, intervalo ou últimas temporadas.');
+  }
+
+  if(hasSeason){
+    const season=optionalSeason(input.temporada);
+    if(season===undefined)throw new DomainError('Informe a temporada da consulta.');
+    return boundedSeasonPeriod(season,season);
+  }
+
+  if(hasStart||hasEnd){
+    if(!hasStart||!hasEnd){
+      throw new DomainError('Para consultar um intervalo, informe temporada_inicio e temporada_fim.');
+    }
+    const start=optionalSeason(input.temporada_inicio);
+    const end=optionalSeason(input.temporada_fim);
+    if(start===undefined||end===undefined)throw new DomainError('Informe as duas temporadas do intervalo.');
+    if(start>end)throw new DomainError('A temporada inicial não pode ser posterior à temporada final.');
+    return boundedSeasonPeriod(start,end);
+  }
+
+  if(hasLatest){
+    const count=Number(input.ultimas_temporadas);
+    const maximumCount=MAX_SEASON-MIN_SEASON+1;
+    if(!Number.isInteger(count)||count<1||count>maximumCount){
+      throw new DomainError(`A quantidade de últimas temporadas deve estar entre 1 e ${maximumCount}.`);
+    }
+    const bounds=await db.prepare('SELECT MIN(season) AS min_season, MAX(season) AS max_season FROM matches').first<SeasonBoundsRow>();
+    if(!bounds||bounds.min_season===null||bounds.max_season===null){
+      throw new DomainError('Não há temporadas disponíveis no acervo.');
+    }
+    const firstAvailable=Number(bounds.min_season);
+    const lastAvailable=Number(bounds.max_season);
+    if(!Number.isInteger(firstAvailable)||!Number.isInteger(lastAvailable)||firstAvailable>lastAvailable){
+      throw new DomainError('Não há temporadas disponíveis no acervo.');
+    }
+    return boundedSeasonPeriod(Math.max(firstAvailable,lastAvailable-count+1),lastAvailable);
+  }
+
+  return {start:undefined,end:undefined,label:PERIOD_LABEL};
+};
+
 export const matchSource=(row:Pick<MatchRow,'id'|'home_team'|'away_team'|'display_date'|'season'>):Source=>({
   id:row.id,
   title:`${row.home_team} × ${row.away_team}`,

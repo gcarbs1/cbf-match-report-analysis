@@ -36,14 +36,17 @@ do not provide an API key or activate a model: the static GitHub Pages frontend
 calls a Cloudflare Worker owned by this project.
 
 The Worker uses Workers AI function calling to choose a controlled data tool,
-validates its arguments, queries D1 with parameterized SQL, and asks the model
-to explain only the returned evidence. The current model is
+validates its arguments, and queries D1 with parameterized SQL. Most results are
+explained by the model using only the returned evidence; player profiles use a
+deterministic formatter to reduce latency. The current model is
 `@cf/meta/llama-3.3-70b-instruct-fp8-fast`.
 
 Available tools cover match and head-to-head search, team comparison, team,
 match, referee and player rankings, plus referee and player profiles. Team aliases
-and fuzzy entity resolution handle common abbreviations and spelling mistakes;
-ambiguous names are rejected instead of silently selecting the wrong entity.
+and player aliases, together with fuzzy entity resolution, handle common
+abbreviations and spelling mistakes; ambiguous names are rejected instead of
+silently selecting the wrong entity. Queries can target one season, an inclusive
+season range, or the latest N seasons available in the dataset.
 
 ### Architecture
 

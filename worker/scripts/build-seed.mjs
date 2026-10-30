@@ -36,6 +36,9 @@ const aliases={
   'Red Bull Bragantino':['Bragantino','RB Bragantino','Red Bull'],
   'Vasco':['Vasco da Gama']
 };
+const playerAliases={
+  'id:402681':['Juninho Capixaba']
+};
 
 const statements=['PRAGMA foreign_keys = ON;'];
 const cardEventStatements=['PRAGMA foreign_keys = ON;','DELETE FROM card_events;'];
@@ -64,7 +67,8 @@ for(const match of matches){
   }
 }
 for(const player of players){
-  statements.push(`INSERT INTO players(id, name, full_name, normalized_name, appearances, card_games, cards, yellow, second_yellow, direct_red, red, aliases_json, teams_json, tags_json) VALUES(${quote(player.id)}, ${quote(player.name)}, ${quote(player.full_name)}, ${quote(normalize(player.name))}, ${Number(player.appearances||0)}, ${Number(player.card_games||0)}, ${Number(player.cards||0)}, ${Number(player.yellow||0)}, ${Number(player.second_yellow||0)}, ${Number(player.direct_red||0)}, ${Number(player.red||0)}, ${quote(json([...new Set([player.name,player.full_name,...(player.aliases||[])])]))}, ${quote(json(player.teams||[]))}, ${quote(json(player.tags||[]))});`);
+  const allAliases=[...new Set([player.name,player.full_name,...(player.aliases||[]),...(playerAliases[player.id]||[])])];
+  statements.push(`INSERT INTO players(id, name, full_name, normalized_name, appearances, card_games, cards, yellow, second_yellow, direct_red, red, aliases_json, teams_json, tags_json) VALUES(${quote(player.id)}, ${quote(player.name)}, ${quote(player.full_name)}, ${quote(normalize(player.name))}, ${Number(player.appearances||0)}, ${Number(player.card_games||0)}, ${Number(player.cards||0)}, ${Number(player.yellow||0)}, ${Number(player.second_yellow||0)}, ${Number(player.direct_red||0)}, ${Number(player.red||0)}, ${quote(json(allAliases))}, ${quote(json(player.teams||[]))}, ${quote(json(player.tags||[]))});`);
 }
 const metadata={
   matches:String(matches.length),events:String(matches.reduce((sum,match)=>sum+match.events.length,0)),
