@@ -1,20 +1,55 @@
 # CBF Match Report Analysis
 
-Analysis of the official Campeonato Brasileiro Série A match reports, focusing on
-card justifications and VAR mentions. The data pipeline and static website are
-centralized in this repository.
+## Summary
+
+This project transforms official Campeonato Brasileiro Série A match reports
+into structured, searchable data. The dashboard explores cards, disciplinary
+reasons, VAR mentions, teams, players, referees, and individual matches from the
+2020–2026 dataset.
+
+The **Match Report Assistant** lets visitors query the dataset in natural
+language. It runs through a project-owned Cloudflare Worker, so visitors do not
+need an API key or model account.
+
+## Methodology
+
+The analysis follows six stages:
+
+1. Collect official CBF match reports.
+2. Extract and normalize match, card, player, team, and referee data.
+3. Categorize card justifications through reproducible keyword rules.
+4. Identify VAR mentions and aggregate disciplinary indicators.
+5. Validate the classification and generate the static dashboard.
+6. Expose the structured dataset through controlled natural-language tools.
+
+The assistant uses the language model only to interpret the question and select
+an allowed tool. The Worker validates the arguments, runs parameterized queries
+against D1, and formats the result deterministically.
+
+```text
+Question → Workers AI router → validated tool → D1 query → grounded answer
+```
+
+This design prevents arbitrary SQL execution and keeps names, dates, and
+statistics tied to the structured dataset.
 
 ## Structure
 
-- `index.html`: static website ready for GitHub Pages.
-- `ai.js` and `ai.css`: AI chat interface that calls the remote Worker.
-- `worker/`: Cloudflare Worker, D1 schema, data import, and Workers AI tools.
-- `fonts/`: website assets.
-- `notebooks/`: data collection, cleaning, classification, analysis, and website generation.
-- `data/`: local raw, intermediate, and processed data (ignored by Git).
-- `viz/`: charts and materials derived from the analysis.
+- `index.html`: static dashboard and embedded datasets for GitHub Pages.
+- `ai.js` and `ai.css`: Match Report Assistant interface.
+- `notebooks/`: collection, cleaning, analysis, validation, and site generation.
+- `worker/src/`: Cloudflare Worker, domain rules, tools, and D1 queries.
+- `worker/migrations/`: D1 schema and database migrations.
+- `worker/evals/`: 96 evaluation questions covering supported queries, spelling
+  variation, ambiguity, empty results, and out-of-scope requests.
+- `worker/scripts/`: seed generation and evaluation runner.
+- `data/`: local raw, intermediate, and processed data; ignored by Git.
+- `viz/`: charts produced by the analysis.
+- `fonts/`: local website fonts.
 
 ## Pipeline
+
+### Data analysis
 
 Run the notebooks in order:
 
@@ -25,146 +60,52 @@ Run the notebooks in order:
 5. `04-build_site.ipynb`
 6. `05-classification_validation.ipynb`
 
-The `04-build_site.ipynb` notebook directly updates the four JSON blocks embedded
-in the root `index.html`. It preserves the rest of the page's HTML, CSS, and
-JavaScript.
+`04-build_site.ipynb` updates the JSON datasets embedded in `index.html` while
+preserving the rest of the page.
 
-## AI de Súmulas
+To preview the static dashboard locally:
 
-The dashboard includes a serverless natural-language analysis agent. Visitors
-do not provide an API key or activate a model: the static GitHub Pages frontend
-calls a Cloudflare Worker owned by this project.
-
-The Worker uses Workers AI function calling to choose a controlled data tool,
-validates its arguments, and queries D1 with parameterized SQL. The tool result
-is formatted deterministically, so names and statistics returned by D1 are not
-rewritten by a second model call. The current and only model is
-`@cf/meta/llama-3.3-70b-instruct-fp8-fast`.
-
-Available tools cover match and head-to-head search, team comparison, team,
-match, referee and player rankings, plus referee and player profiles. Team aliases
-and normalized, indexed player aliases, together with fuzzy entity resolution,
-handle common abbreviations and spelling mistakes; ambiguous names are rejected
-instead of silently selecting the wrong entity. Queries can target one season,
-an inclusive season range, or the latest N seasons available in the dataset.
-Available season bounds are read from D1 instead of being hard-coded.
-
-### Architecture
-
-```text
-Question on GitHub Pages
-        |
-        v
-Cloudflare Worker /chat
-        |
-        v
-Workers AI tool call
-        |
-        v
-Validated function --> parameterized D1 query
-                                  |
-        deterministic formatter <-|
-        |
-        v
-Grounded answer + clickable match evidence
+```bash
+python -m http.server 8000
 ```
 
-The public API enforces an origin allowlist, a 600-character request limit, a
-10-requests-per-minute rate limit per visitor, and a maximum tool set. The model
-never receives permission to generate or execute arbitrary SQL.
+Then open `http://localhost:8000`.
 
-### Worker development
+### Match Report Assistant
 
-The backend lives in `worker/`:
-
-- `src/index.ts`: HTTP, CORS, rate limiting, and the tool-calling flow.
-- `src/tools.ts`: validated domain tools and D1 queries.
-- `migrations/`: the D1 schema, including normalized card events.
-- `scripts/build-seed.mjs`: builds full and event-only D1 imports from the JSON
-  embedded in `index.html`.
-- `evals/cases.json`: 96 regression questions covering the supported domain,
-  spelling variation, ambiguity, empty results, periods, and out-of-scope input.
-
-Prerequisites are Node.js 20+, a free Cloudflare account, and Wrangler authenticated
-with that account. The analysis notebooks use Python 3.12 and `curl`; Poppler's
-`pdftotext` is optional because the pipeline falls back to `pdfplumber`.
-
-For the first Cloudflare setup, authenticate and create the database:
+Requirements: Node.js 20+, a Cloudflare account, and Wrangler authentication.
 
 ```bash
 cd worker
 npm install
-npx wrangler login
-npx wrangler d1 create cbf-sumulas-ai
-```
-
-Copy the returned `database_id` into `worker/wrangler.jsonc`. Then create and seed
-the remote database before the first deploy:
-
-```bash
-npm run build:seed
-npx wrangler d1 migrations apply DB --remote
-npx wrangler d1 execute DB --remote --file generated/seed.sql
-npm run deploy
-```
-
-For a database created before `0002_card_events.sql`, apply the migration and
-backfill only the new event table without rewriting existing match data:
-
-```bash
-npm run build:seed
-npx wrangler d1 migrations apply DB --remote
-npx wrangler d1 execute DB --remote --file generated/seed-events.sql
-npm run deploy
-```
-
-For a database created before `0004_player_aliases.sql`, apply the migration and
-backfill the normalized player alias index before deploying the updated Worker:
-
-```bash
-npm run build:seed
-npx wrangler d1 migrations apply DB --remote
-npx wrangler d1 execute DB --remote --file generated/seed-player-aliases.sql
-npm run deploy
-```
-
-No visitor token or model activation is required. Workers AI uses the `AI` binding
-declared in `wrangler.jsonc`; Cloudflare applies the account's usage limits.
-
-For local Worker development, use a local D1 database:
-
-```bash
 npm run build:seed
 npx wrangler d1 migrations apply DB --local
 npx wrangler d1 execute DB --local --file generated/seed.sql
 npm run dev
 ```
 
-Deploy later backend changes with `npm run deploy`. The production health endpoint is
-`https://cbf-sumulas-ai.cbf-sumulas-ai-worker.workers.dev/health`.
-
-The frontend is static and also works when `index.html` is opened directly with
-`file://` (`Origin: null` is explicitly allowed). For normal development and the
-closest GitHub Pages behavior, serve the repository over HTTP (for example,
-`python -m http.server 8000`). Keep production and local origins synchronized in
-`ALLOWED_ORIGINS`.
-
-### Validation and evaluations
+For the first deployment in a new Cloudflare account, authenticate, create a D1
+database, and copy its ID into `worker/wrangler.jsonc`:
 
 ```bash
-cd worker
+npx wrangler login
+npx wrangler d1 create cbf-sumulas-ai
+npx wrangler d1 migrations apply DB --remote
+npx wrangler d1 execute DB --remote --file generated/seed.sql
+npm run deploy
+```
+
+The current Worker uses
+`@cf/meta/llama-3.3-70b-instruct-fp8-fast` as its only model. The public API has
+an origin allowlist, request-size validation, rate limiting, and a fixed tool
+set.
+
+Validate the TypeScript project and inspect an evaluation plan with:
+
+```bash
 npm run typecheck
-```
-
-The AI evaluation runner is dry-run by default. Select a small balanced sample
-before authorizing live Workers AI usage:
-
-```bash
-cd worker
 npm run eval -- --per-category 2
-npm run eval -- --per-category 2 --confirm-live --output eval-results.json
 ```
 
-Live reports separate answer-quality failures from rate limits, quota exhaustion,
-timeouts, and other infrastructure failures. See `worker/evals/README.md` for all
-filters and metrics.
+Live evaluations require the explicit `--confirm-live` flag because they consume
+Workers AI quota. See `worker/evals/README.md` for available filters and metrics.
