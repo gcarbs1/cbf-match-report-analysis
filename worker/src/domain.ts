@@ -1,9 +1,5 @@
 import type {MatchEvent,MatchRow,Source} from './types';
 
-export const MIN_SEASON=2020;
-export const MAX_SEASON=2026;
-export const PERIOD_LABEL=`${MIN_SEASON}–${MAX_SEASON}`;
-
 export class DomainError extends Error {
   constructor(message:string){
     super(message);
@@ -94,17 +90,27 @@ interface PlayerLookup {
   aliases_json:string;
 }
 
+interface PlayerAliasLookup extends PlayerLookup {
+  alias:string;
+}
+
 export const resolvePlayer=async(db:D1Database,value:unknown):Promise<PlayerLookup>=>{
   const query=String(value??'').trim();
   const normalized=normalizeName(query);
-  const exact=await db.prepare('SELECT id, name, full_name, aliases_json FROM players WHERE normalized_name = ?').bind(normalized).all<PlayerLookup>();
+  const exact=await db.prepare(`
+    SELECT players.id, players.name, players.full_name, players.aliases_json, player_aliases.alias
+    FROM player_aliases
+    JOIN players ON players.id = player_aliases.player_id
+    WHERE player_aliases.normalized_alias = ?
+  `).bind(normalized).all<PlayerAliasLookup>();
   if(exact.results.length===1)return exact.results[0];
   if(exact.results.length>1)throw new DomainError(`“${query}” corresponde a mais de um jogador. Informe o nome completo.`);
-  const {results}=await db.prepare('SELECT id, name, full_name, aliases_json FROM players').all<PlayerLookup>();
-  return bestMatch(query,results,item=>{
-    const aliases=safeJson<string[]>(item.aliases_json,[]);
-    return [item.name,item.full_name,...aliases];
-  },item=>item.id,0.78);
+  const {results}=await db.prepare(`
+    SELECT players.id, players.name, players.full_name, players.aliases_json, player_aliases.alias
+    FROM player_aliases
+    JOIN players ON players.id = player_aliases.player_id
+  `).all<PlayerAliasLookup>();
+  return bestMatch(query,results,item=>[item.alias,item.name,item.full_name],item=>item.id,0.78);
 };
 
 export const safeJson=<T>(value:string|undefined,fallback:T):T=>{
@@ -120,7 +126,7 @@ export const integer=(value:unknown,options:{min:number;max:number;fallback:numb
 export const optionalSeason=(value:unknown):number|undefined=>{
   if(value===undefined||value===null||value==='')return undefined;
   const parsed=Number(value);
-  if(!Number.isInteger(parsed)||parsed<MIN_SEASON||parsed>MAX_SEASON)throw new DomainError(`A temporada deve estar entre ${MIN_SEASON} e ${MAX_SEASON}.`);
+  if(!Number.isInteger(parsed)||parsed<1900||parsed>2100)throw new DomainError('Informe um ano de temporada válido.');
   return parsed;
 };
 
@@ -142,6 +148,12 @@ interface SeasonBoundsRow {
   max_season:number|null;
 }
 
+export interface SeasonBounds {
+  first:number;
+  last:number;
+  label:string;
+}
+
 const hasPeriodValue=(value:unknown):boolean=>value!==undefined&&value!==null&&value!=='';
 
 const boundedSeasonPeriod=(start:number,end:number):SeasonPeriod=>({
@@ -149,6 +161,28 @@ const boundedSeasonPeriod=(start:number,end:number):SeasonPeriod=>({
   end,
   label:start===end?String(start):`${start}–${end}`
 });
+
+export const readSeasonBounds=async(db:D1Database):Promise<SeasonBounds>=>{
+  const row=await db.prepare('SELECT MIN(season) AS min_season, MAX(season) AS max_season FROM matches').first<SeasonBoundsRow>();
+  if(!row||row.min_season===null||row.max_season===null){
+    throw new DomainError('Não há temporadas disponíveis no acervo.');
+  }
+  const first=Number(row.min_season);
+  const last=Number(row.max_season);
+  if(!Number.isInteger(first)||!Number.isInteger(last)||first>last){
+    throw new DomainError('Não há temporadas disponíveis no acervo.');
+  }
+  return {first,last,label:boundedSeasonPeriod(first,last).label};
+};
+
+const seasonInBounds=(value:unknown,bounds:SeasonBounds):number=>{
+  const season=optionalSeason(value);
+  if(season===undefined)throw new DomainError('Informe a temporada da consulta.');
+  if(season<bounds.first||season>bounds.last){
+    throw new DomainError(`A temporada deve estar entre ${bounds.first} e ${bounds.last}.`);
+  }
+  return season;
+};
 
 export const resolveSeasonPeriod=async(db:D1Database,input:SeasonPeriodInput):Promise<SeasonPeriod>=>{
   const hasSeason=hasPeriodValue(input.temporada);
@@ -161,42 +195,34 @@ export const resolveSeasonPeriod=async(db:D1Database,input:SeasonPeriodInput):Pr
     throw new DomainError('Use apenas um recorte: temporada, intervalo ou últimas temporadas.');
   }
 
+  if((hasStart||hasEnd)&&(!hasStart||!hasEnd)){
+    throw new DomainError('Para consultar um intervalo, informe temporada_inicio e temporada_fim.');
+  }
+
+  const bounds=await readSeasonBounds(db);
+
   if(hasSeason){
-    const season=optionalSeason(input.temporada);
-    if(season===undefined)throw new DomainError('Informe a temporada da consulta.');
+    const season=seasonInBounds(input.temporada,bounds);
     return boundedSeasonPeriod(season,season);
   }
 
   if(hasStart||hasEnd){
-    if(!hasStart||!hasEnd){
-      throw new DomainError('Para consultar um intervalo, informe temporada_inicio e temporada_fim.');
-    }
-    const start=optionalSeason(input.temporada_inicio);
-    const end=optionalSeason(input.temporada_fim);
-    if(start===undefined||end===undefined)throw new DomainError('Informe as duas temporadas do intervalo.');
+    const start=seasonInBounds(input.temporada_inicio,bounds);
+    const end=seasonInBounds(input.temporada_fim,bounds);
     if(start>end)throw new DomainError('A temporada inicial não pode ser posterior à temporada final.');
     return boundedSeasonPeriod(start,end);
   }
 
   if(hasLatest){
     const count=Number(input.ultimas_temporadas);
-    const maximumCount=MAX_SEASON-MIN_SEASON+1;
-    if(!Number.isInteger(count)||count<1||count>maximumCount){
-      throw new DomainError(`A quantidade de últimas temporadas deve estar entre 1 e ${maximumCount}.`);
+    const availableSeasons=bounds.last-bounds.first+1;
+    if(!Number.isInteger(count)||count<1||count>availableSeasons){
+      throw new DomainError(`A quantidade de últimas temporadas deve estar entre 1 e ${availableSeasons}.`);
     }
-    const bounds=await db.prepare('SELECT MIN(season) AS min_season, MAX(season) AS max_season FROM matches').first<SeasonBoundsRow>();
-    if(!bounds||bounds.min_season===null||bounds.max_season===null){
-      throw new DomainError('Não há temporadas disponíveis no acervo.');
-    }
-    const firstAvailable=Number(bounds.min_season);
-    const lastAvailable=Number(bounds.max_season);
-    if(!Number.isInteger(firstAvailable)||!Number.isInteger(lastAvailable)||firstAvailable>lastAvailable){
-      throw new DomainError('Não há temporadas disponíveis no acervo.');
-    }
-    return boundedSeasonPeriod(Math.max(firstAvailable,lastAvailable-count+1),lastAvailable);
+    return boundedSeasonPeriod(bounds.last-count+1,bounds.last);
   }
 
-  return {start:undefined,end:undefined,label:PERIOD_LABEL};
+  return {start:undefined,end:undefined,label:bounds.label};
 };
 
 export const matchSource=(row:Pick<MatchRow,'id'|'home_team'|'away_team'|'display_date'|'season'>):Source=>({

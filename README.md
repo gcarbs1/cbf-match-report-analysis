@@ -36,17 +36,18 @@ do not provide an API key or activate a model: the static GitHub Pages frontend
 calls a Cloudflare Worker owned by this project.
 
 The Worker uses Workers AI function calling to choose a controlled data tool,
-validates its arguments, and queries D1 with parameterized SQL. Most results are
-explained by the model using only the returned evidence; player profiles use a
-deterministic formatter to reduce latency. The current model is
+validates its arguments, and queries D1 with parameterized SQL. The tool result
+is formatted deterministically, so names and statistics returned by D1 are not
+rewritten by a second model call. The current and only model is
 `@cf/meta/llama-3.3-70b-instruct-fp8-fast`.
 
 Available tools cover match and head-to-head search, team comparison, team,
 match, referee and player rankings, plus referee and player profiles. Team aliases
-and player aliases, together with fuzzy entity resolution, handle common
-abbreviations and spelling mistakes; ambiguous names are rejected instead of
-silently selecting the wrong entity. Queries can target one season, an inclusive
-season range, or the latest N seasons available in the dataset.
+and normalized, indexed player aliases, together with fuzzy entity resolution,
+handle common abbreviations and spelling mistakes; ambiguous names are rejected
+instead of silently selecting the wrong entity. Queries can target one season,
+an inclusive season range, or the latest N seasons available in the dataset.
+Available season bounds are read from D1 instead of being hard-coded.
 
 ### Architecture
 
@@ -61,8 +62,8 @@ Workers AI tool call
         |
         v
 Validated function --> parameterized D1 query
-        ^                         |
-        |------ structured data --|
+                                  |
+        deterministic formatter <-|
         |
         v
 Grounded answer + clickable match evidence
@@ -81,6 +82,8 @@ The backend lives in `worker/`:
 - `migrations/`: the D1 schema, including normalized card events.
 - `scripts/build-seed.mjs`: builds full and event-only D1 imports from the JSON
   embedded in `index.html`.
+- `evals/cases.json`: 96 regression questions covering the supported domain,
+  spelling variation, ambiguity, empty results, periods, and out-of-scope input.
 
 Prerequisites are Node.js 20+, a free Cloudflare account, and Wrangler authenticated
 with that account. The analysis notebooks use Python 3.12 and `curl`; Poppler's
@@ -115,6 +118,16 @@ npx wrangler d1 execute DB --remote --file generated/seed-events.sql
 npm run deploy
 ```
 
+For a database created before `0004_player_aliases.sql`, apply the migration and
+backfill the normalized player alias index before deploying the updated Worker:
+
+```bash
+npm run build:seed
+npx wrangler d1 migrations apply DB --remote
+npx wrangler d1 execute DB --remote --file generated/seed-player-aliases.sql
+npm run deploy
+```
+
 No visitor token or model activation is required. Workers AI uses the `AI` binding
 declared in `wrangler.jsonc`; Cloudflare applies the account's usage limits.
 
@@ -144,3 +157,16 @@ cd worker
 npm run typecheck
 npm test
 ```
+
+The AI evaluation runner is dry-run by default. Select a small balanced sample
+before authorizing live Workers AI usage:
+
+```bash
+cd worker
+npm run eval -- --per-category 2
+npm run eval -- --per-category 2 --confirm-live --output eval-results.json
+```
+
+Live reports separate answer-quality failures from rate limits, quota exhaustion,
+timeouts, and other infrastructure failures. See `worker/evals/README.md` for all
+filters and metrics.

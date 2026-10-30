@@ -27,17 +27,34 @@ assert.equal(await resolveTeam(teamDb,'athetico paranaense'),'Athletico-PR');
 await assert.rejects(()=>resolveTeam(teamDb,'atletico'),/ambíguo/);
 
 const duplicatePlayers=[
-  {id:'1',name:'Lucas',full_name:'Lucas A',aliases_json:'[]'},
-  {id:'2',name:'Lucas',full_name:'Lucas B',aliases_json:'[]'}
+  {id:'1',name:'Lucas',full_name:'Lucas A',aliases_json:'[]',alias:'Lucas'},
+  {id:'2',name:'Lucas',full_name:'Lucas B',aliases_json:'[]',alias:'Lucas'}
 ];
 const playerDb={
   prepare(){return {bind(){return this;},all:async()=>({results:duplicatePlayers})};}
 };
 await assert.rejects(()=>resolvePlayer(playerDb,'Lucas'),/mais de um jogador/);
 
+const aliasCalls=[];
+const exactAliasDb={
+  prepare(query){
+    aliasCalls.push(query);
+    return {
+      bind(){return this;},
+      all:async()=>({results:query.includes('WHERE player_aliases.normalized_alias = ?')
+        ?[{id:'402681',name:'J. Capixaba',full_name:'Luis Antonio da Rocha Junior',aliases_json:'[]',alias:'Juninho Capixaba'}]
+        :[]})
+    };
+  }
+};
+assert.equal((await resolvePlayer(exactAliasDb,'Juninho Capixaba')).id,'402681');
+assert.equal(aliasCalls.length,1);
+assert.match(aliasCalls[0],/FROM player_aliases/);
+
 assert.equal(optionalSeason(2020),2020);
 assert.equal(optionalSeason(2026),2026);
-assert.throws(()=>optionalSeason(2027),/entre 2020 e 2026/);
+assert.equal(optionalSeason(2027),2027);
+assert.throws(()=>optionalSeason(1800),/ano de temporada válido/);
 
 let boundsQuery='';
 const periodDb={
@@ -62,11 +79,12 @@ assert.equal(rangePeriod.start,2022);
 assert.equal(rangePeriod.end,2025);
 assert.equal(rangePeriod.label,'2022–2025');
 
-const clampedPeriod=await resolveSeasonPeriod({
-  prepare(){return {first:async()=>({min_season:2023,max_season:2026})};}
-},{ultimas_temporadas:7});
-assert.equal(clampedPeriod.start,2023);
-assert.equal(clampedPeriod.end,2026);
+await assert.rejects(
+  ()=>resolveSeasonPeriod({
+    prepare(){return {first:async()=>({min_season:2023,max_season:2026})};}
+  },{ultimas_temporadas:7}),
+  /entre 1 e 4/
+);
 
 await assert.rejects(
   ()=>resolveSeasonPeriod(periodDb,{temporada:2024,ultimas_temporadas:2}),
@@ -83,6 +101,10 @@ await assert.rejects(
 await assert.rejects(
   ()=>resolveSeasonPeriod(periodDb,{ultimas_temporadas:0}),
   /entre 1 e 7/
+);
+await assert.rejects(
+  ()=>resolveSeasonPeriod(periodDb,{temporada:2027}),
+  /entre 2020 e 2026/
 );
 await assert.rejects(
   ()=>resolveSeasonPeriod({prepare(){return {first:async()=>({min_season:null,max_season:null})};}},{ultimas_temporadas:2}),

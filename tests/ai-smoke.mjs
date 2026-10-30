@@ -64,7 +64,7 @@ assert.equal(payload.message,'quem apitou palmeiras e corinthinas em 2023');
 assert.deepEqual(payload.history,[]);
 const rendered=elements.get('aiMessages').children.map(child=>child.innerHTML).join('\n');
 assert.match(rendered,/Anderson Daronco/);
-assert.match(rendered,/Ver fontes \(1\)/);
+assert.match(rendered,/Ver partidas de referência \(1\)/);
 
 failChat=true;
 elements.get('aiInput').value='qual foi a partida com mais cartões?';

@@ -1,12 +1,12 @@
-import {DomainError,integer,matchSource,MAX_SEASON,MIN_SEASON,publicMatch,resolvePlayer,resolveReferee,resolveSeasonPeriod,resolveTeam,safeJson,uniqueSources} from './domain';
+import {DomainError,integer,matchSource,publicMatch,resolvePlayer,resolveReferee,resolveSeasonPeriod,resolveTeam,safeJson,uniqueSources} from './domain';
 import type {SeasonPeriod} from './domain';
 import type {AiToolDefinition,JsonObject,MatchEvent,MatchRow,Source,ToolExecution} from './types';
 
 const objectSchema=(properties:JsonObject,required:string[]=[]):JsonObject=>({
   type:'object',properties,required,additionalProperties:false
 });
-const seasonParameter=(description=`Ano da temporada entre ${MIN_SEASON} e ${MAX_SEASON}.`):JsonObject=>({
-  type:'integer',minimum:MIN_SEASON,maximum:MAX_SEASON,description
+const seasonParameter=(description='Ano de uma temporada disponível no acervo.'):JsonObject=>({
+  type:'integer',description
 });
 const periodParameters=():JsonObject=>({
   temporada:seasonParameter('Temporada exata. Não combinar com intervalo ou últimas temporadas.'),
@@ -15,7 +15,6 @@ const periodParameters=():JsonObject=>({
   ultimas_temporadas:{
     type:'integer',
     minimum:1,
-    maximum:MAX_SEASON-MIN_SEASON+1,
     description:'Quantidade de temporadas mais recentes disponíveis no acervo. Use para pedidos como “nos últimos 2 anos”; não combine com outros filtros de temporada.'
   }
 });
@@ -30,10 +29,18 @@ export const TOOL_DEFINITIONS:AiToolDefinition[]=[
       parameters:objectSchema({
         time_1:{type:'string',description:'Primeiro time citado pelo usuário.'},
         time_2:{type:'string',description:'Segundo time, quando a pergunta for sobre um confronto.'},
+        campos:{
+          type:'array',
+          items:{type:'string',enum:['resumo','arbitro','cartoes','var']},
+          minItems:1,
+          maxItems:4,
+          uniqueItems:true,
+          description:'Aspectos pedidos: resumo para visão geral, arbitro, cartoes para listar eventos, e var.'
+        },
         ...periodParameters(),
         data:{type:'string',pattern:'^\\d{2}/\\d{2}/\\d{4}$',description:'Data exata no formato DD/MM/AAAA, se mencionada.'},
         limite:limitParameter('Quantidade máxima de partidas.')
-      },['time_1'])
+      },['time_1','campos'])
     }
   },
   {
@@ -144,6 +151,11 @@ const periodSelection=(period:SeasonPeriod):JsonObject=>{
 
 const findMatches=async(db:D1Database,raw:unknown):Promise<ToolExecution>=>{
   const args=argsObject(raw);
+  const allowedFields=new Set(['resumo','arbitro','cartoes','var']);
+  const fields=Array.isArray(args.campos)
+    ?[...new Set(args.campos.filter(value=>typeof value==='string'&&allowedFields.has(value)) as string[])]
+    :[];
+  if(!fields.length)fields.push('resumo');
   const first=await resolveTeam(db,args.time_1);
   const second=args.time_2?await resolveTeam(db,args.time_2):undefined;
   const period=await resolvePeriod(db,args);
@@ -169,9 +181,9 @@ const findMatches=async(db:D1Database,raw:unknown):Promise<ToolExecution>=>{
   return {
     name:'buscar_partidas',
     data:{
-      consulta:{time_1:first,...(second?{time_2:second}:{}),...periodSelection(period),...(date?{data:date}:{})},
+      consulta:{time_1:first,...(second?{time_2:second}:{}),campos:fields,...periodSelection(period),...(date?{data:date}:{})},
       quantidade:results.length,
-      partidas:results.map(row=>publicMatch(row,true))
+      partidas:results.map(row=>publicMatch(row,fields.includes('cartoes')))
     },
     sources:results.map(matchSource)
   };

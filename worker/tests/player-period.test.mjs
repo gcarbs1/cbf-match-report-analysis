@@ -39,6 +39,7 @@ const player={
   id:'id:633571',
   name:'Gustavo Gomez',
   full_name:'Gustavo Raul Gomez Portillo',
+  alias:'Gustavo Gomez',
   appearances:100,
   card_games:45,
   cards:51,
@@ -66,7 +67,8 @@ const profileDb={
         return null;
       },
       async all(){
-        if(query.includes('WHERE normalized_name = ?'))return {results:[player]};
+        if(query.includes('WHERE player_aliases.normalized_alias = ?'))return {results:[]};
+        if(query.includes('FROM player_aliases'))return {results:[player]};
         if(query.includes('SELECT card_events.team AS team'))return {results:[{team:'Palmeiras'}]};
         if(query.includes('JOIN json_each(card_events.tags_json)'))return {results:[{categoria:'Reclamação',total:2,amarelos:2,vermelhos:0}]};
         return {results:[]};

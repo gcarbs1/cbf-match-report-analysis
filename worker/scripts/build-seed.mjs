@@ -25,7 +25,12 @@ const matches=readDataset('match-data');
 const players=readDataset('player-data');
 const varData=readDataset('var-data');
 const siteData=readDataset('site-data');
+const playerAliases=JSON.parse(fs.readFileSync(path.join(workerDirectory,'config','player-aliases.json'),'utf8'));
 const varMatches=new Set(varData.matches_with_var);
+const seasons=matches.map(match=>Number(match.year)).filter(Number.isInteger);
+if(!seasons.length)throw new Error('Match dataset has no valid seasons');
+const minSeason=Math.min(...seasons);
+const maxSeason=Math.max(...seasons);
 const teams=[...new Set(matches.flatMap(match=>[match.home,match.away]))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
 const referees=[...new Set(matches.map(match=>match.ref))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
 const aliases={
@@ -36,12 +41,9 @@ const aliases={
   'Red Bull Bragantino':['Bragantino','RB Bragantino','Red Bull'],
   'Vasco':['Vasco da Gama']
 };
-const playerAliases={
-  'id:402681':['Juninho Capixaba']
-};
-
 const statements=['PRAGMA foreign_keys = ON;'];
 const cardEventStatements=['PRAGMA foreign_keys = ON;','DELETE FROM card_events;'];
+const playerAliasStatements=['PRAGMA foreign_keys = ON;'];
 for(const team of teams){
   statements.push(`INSERT INTO teams(name, normalized_name) VALUES(${quote(team)}, ${quote(normalize(team))});`);
   for(const alias of new Set([team,...(aliases[team]||[])]))statements.push(`INSERT OR IGNORE INTO team_aliases(alias, normalized_alias, team_name) VALUES(${quote(alias)}, ${quote(normalize(alias))}, ${quote(team)});`);
@@ -69,21 +71,30 @@ for(const match of matches){
 for(const player of players){
   const allAliases=[...new Set([player.name,player.full_name,...(player.aliases||[]),...(playerAliases[player.id]||[])])];
   statements.push(`INSERT INTO players(id, name, full_name, normalized_name, appearances, card_games, cards, yellow, second_yellow, direct_red, red, aliases_json, teams_json, tags_json) VALUES(${quote(player.id)}, ${quote(player.name)}, ${quote(player.full_name)}, ${quote(normalize(player.name))}, ${Number(player.appearances||0)}, ${Number(player.card_games||0)}, ${Number(player.cards||0)}, ${Number(player.yellow||0)}, ${Number(player.second_yellow||0)}, ${Number(player.direct_red||0)}, ${Number(player.red||0)}, ${quote(json(allAliases))}, ${quote(json(player.teams||[]))}, ${quote(json(player.tags||[]))});`);
+  for(const alias of allAliases){
+    const statement=`INSERT OR IGNORE INTO player_aliases(alias, normalized_alias, player_id) VALUES(${quote(alias)}, ${quote(normalize(alias))}, ${quote(player.id)});`;
+    statements.push(statement);
+    playerAliasStatements.push(statement);
+  }
 }
 const metadata={
   matches:String(matches.length),events:String(matches.reduce((sum,match)=>sum+match.events.length,0)),
-  players:String(players.length),latest_match_date:siteData.manifest.latest_match_date||''
+  players:String(players.length),latest_match_date:siteData.manifest.latest_match_date||'',
+  min_season:String(minSeason),max_season:String(maxSeason),period_label:`${minSeason}–${maxSeason}`
 };
 for(const [key,value] of Object.entries(metadata))statements.push(`INSERT INTO dataset_metadata(key, value) VALUES(${quote(key)}, ${quote(value)});`);
 fs.mkdirSync(outputDirectory,{recursive:true});
 const outputPath=path.join(outputDirectory,'seed.sql');
 const cardEventsOutputPath=path.join(outputDirectory,'seed-events.sql');
+const playerAliasesOutputPath=path.join(outputDirectory,'seed-player-aliases.sql');
 fs.writeFileSync(outputPath,statements.join('\n')+'\n');
 fs.writeFileSync(cardEventsOutputPath,cardEventStatements.join('\n')+'\n');
+fs.writeFileSync(playerAliasesOutputPath,playerAliasStatements.join('\n')+'\n');
 console.log(JSON.stringify({
   outputs:{
     full:{path:outputPath,statements:statements.length,bytes:fs.statSync(outputPath).size},
-    events:{path:cardEventsOutputPath,statements:cardEventStatements.length,bytes:fs.statSync(cardEventsOutputPath).size}
+    events:{path:cardEventsOutputPath,statements:cardEventStatements.length,bytes:fs.statSync(cardEventsOutputPath).size},
+    playerAliases:{path:playerAliasesOutputPath,statements:playerAliasStatements.length,bytes:fs.statSync(playerAliasesOutputPath).size}
   },
   matches:matches.length,
   events:Number(metadata.events),

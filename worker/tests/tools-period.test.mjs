@@ -33,6 +33,9 @@ const comparisonProperties=comparisonDefinition.function.parameters.properties;
 for(const field of ['temporada','temporada_inicio','temporada_fim','ultimas_temporadas']){
   assert.ok(comparisonProperties[field],`Missing period field: ${field}`);
 }
+const matchDefinition=TOOL_DEFINITIONS.find(tool=>tool.function.name==='buscar_partidas');
+assert.ok(matchDefinition.function.parameters.required.includes('campos'));
+assert.deepEqual(Array.from(matchDefinition.function.parameters.properties.campos.items.enum),['resumo','arbitro','cartoes','var']);
 
 const calls=[];
 const db={
@@ -66,11 +69,13 @@ assert.equal(latestStatsCall.bindings.at(-1),2026);
 calls.length=0;
 const exact=await executeTool(db,'buscar_partidas',{
   time_1:'fluminense',
+  campos:['arbitro'],
   temporada:2024
 });
 assert.equal(exact.data.consulta.temporada,2024);
 assert.equal(exact.data.consulta.periodo,'2024');
-assert.equal(calls.some(call=>call.query.includes('MIN(season)')),false);
+assert.deepEqual(Array.from(exact.data.consulta.campos),['arbitro']);
+assert.equal(calls.some(call=>call.query.includes('MIN(season)')),true);
 const matchCall=calls.find(call=>call.query.includes('SELECT * FROM matches'));
 assert.match(matchCall.query,/season = \?/);
 assert.equal(matchCall.bindings.at(-2),2024);

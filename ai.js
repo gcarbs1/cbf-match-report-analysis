@@ -45,7 +45,7 @@ function answerHtml(value){
 
 function sourceButtons(sources){
   if(!Array.isArray(sources)||!sources.length)return'';
-  return '<details class="ai-evidence"><summary>Ver fontes ('+clean(sources.length)+')</summary><div class="ai-evidence-list" aria-label="Partidas usadas como fonte">'+sources.map(source=>{
+  return '<details class="ai-evidence"><summary>Ver partidas de referência ('+clean(sources.length)+')</summary><div class="ai-evidence-list" aria-label="Partidas de referência da consulta">'+sources.map(source=>{
     const label=`${source.title||'Partida'} · ${source.date||source.year||''}`;
     return '<button class="ai-source" type="button" data-match="'+clean(source.id)+'" data-year="'+clean(source.year)+'">'+clean(label)+'</button>';
   }).join('')+'</div></details>';
