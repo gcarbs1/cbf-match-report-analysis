@@ -149,13 +149,11 @@ closest GitHub Pages behavior, serve the repository over HTTP (for example,
 `python -m http.server 8000`). Keep production and local origins synchronized in
 `ALLOWED_ORIGINS`.
 
-### Tests
+### Validation and evaluations
 
 ```bash
-node --test tests/*.mjs
 cd worker
 npm run typecheck
-npm test
 ```
 
 The AI evaluation runner is dry-run by default. Select a small balanced sample
