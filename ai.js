@@ -3,15 +3,13 @@
 
 const API_ENDPOINT='https://cbf-sumulas-ai.cbf-sumulas-ai-worker.workers.dev';
 const CHAT_TIMEOUT_MS=75_000;
-const SLOW_QUERY_NOTICE_MS=12_000;
 const ui={
   messages:document.getElementById('aiMessages'),
   form:document.getElementById('aiForm'),
   input:document.getElementById('aiInput'),
-  send:document.getElementById('aiSend'),
-  status:document.getElementById('aiStatus')
+  send:document.getElementById('aiSend')
 };
-if(!ui.messages||!ui.form||!ui.input||!ui.send||!ui.status)return;
+if(!ui.messages||!ui.form||!ui.input||!ui.send)return;
 
 let busy=false;
 const history=[];
@@ -64,30 +62,11 @@ function addMessage(role,html,sources=[]){
 
 const addThinking=()=>addMessage('assistant','<div class="ai-thinking" aria-label="Consultando o acervo"><i></i><i></i><i></i></div>');
 
-function setStatus(text,state=''){
-  ui.status.textContent=text;
-  ui.status.classList.toggle('remote',state==='online');
-  ui.status.classList.toggle('loading',state==='loading');
-}
-
 async function fetchWithTimeout(path,options={},timeout=CHAT_TIMEOUT_MS){
   const controller=new AbortController();
   const timer=setTimeout(()=>controller.abort(),timeout);
   try{return await fetch(API_ENDPOINT+path,{...options,signal:controller.signal});}
   finally{clearTimeout(timer);}
-}
-
-async function checkHealth(){
-  setStatus('Conectando','loading');
-  try{
-    const response=await fetchWithTimeout('/health',{},10_000);
-    if(!response.ok)throw new Error('Serviço indisponível');
-    const data=await response.json();
-    if(!data.ok)throw new Error('Serviço indisponível');
-    setStatus('AI online','online');
-  }catch{
-    setStatus('AI indisponível');
-  }
 }
 
 async function submit(question){
@@ -99,8 +78,6 @@ async function submit(question){
   ui.input.value='';
   addMessage('user','<p>'+clean(message)+'</p>');
   const thinking=addThinking();
-  setStatus('Consultando','loading');
-  const slowQueryNotice=setTimeout(()=>setStatus('Ainda consultando','loading'),SLOW_QUERY_NOTICE_MS);
   try{
     const response=await fetchWithTimeout('/chat',{
       method:'POST',
@@ -113,7 +90,6 @@ async function submit(question){
     addMessage('assistant',answerHtml(data.answer),data.sources||[]);
     history.push({role:'user',content:message},{role:'assistant',content:data.answer});
     if(history.length>12)history.splice(0,history.length-12);
-    setStatus('AI online','online');
   }catch(error){
     thinking.remove();
     const timedOut=error?.name==='AbortError';
@@ -124,9 +100,7 @@ async function submit(question){
         ?'Não foi possível conectar ao serviço de AI. Verifique sua internet e tente novamente.'
         :error.message;
     addMessage('assistant','<p><strong>Não consegui concluir a consulta.</strong></p><p>'+clean(detail)+'</p>');
-    setStatus(timedOut?'AI lenta':'AI indisponível');
   }finally{
-    clearTimeout(slowQueryNotice);
     busy=false;
     ui.send.disabled=false;
     ui.form.removeAttribute('aria-busy');
@@ -151,5 +125,4 @@ ui.messages.addEventListener('click',event=>{
   document.getElementById('partidas')?.scrollIntoView({behavior:'smooth'});
 });
 
-checkHealth();
 })();
