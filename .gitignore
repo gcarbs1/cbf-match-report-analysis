@@ -1,43 +1,40 @@
-# Python
-__pycache__/
-*.py[cod]
-*.pyo
-*.pyd
-*.egg-info/
-dist/
-build/
-.eggs/
-*.egg
-
-# Virtual environment
-venv/
-.venv/
-env/
-.env/
-
-# Data
-data/
-
-# Jupyter
-.ipynb_checkpoints/
-*.ipynb_checkpoints
-
-# OS
+# macOS
 .DS_Store
-Thumbs.db
+**/.DS_Store
 
-# IDE
+# Editores e IDEs
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# Logs
-*.log
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+dist/
+build/
 
-# Env files
+# Jupyter
+.ipynb_checkpoints/
+
+# Dados gerados pelos notebooks
+data/raw/*
+!data/raw/.gitkeep
+data/interim/*
+!data/interim/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+
+# Arquivos locais de ambiente
 .env
 .env.*
+!.env.example
+
+# Logs
+*.log
 
 # Cloudflare Worker
 worker/node_modules/
