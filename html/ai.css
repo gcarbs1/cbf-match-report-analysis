@@ -3,7 +3,7 @@
 .ai-layout{display:grid;grid-template-columns:minmax(280px,.72fr) minmax(0,1.28fr);gap:clamp(48px,8vw,112px);align-items:center}
 .ai-copy{max-width:440px}
 .ai-copy h2{max-width:430px;color:var(--paper);font-size:clamp(44px,5.2vw,70px);line-height:.94;letter-spacing:-.055em}
-.ai-copy p{max-width:410px;margin-top:28px;color:#b8aa98;font-size:15px;line-height:1.65}
+.ai-copy p{max-width:410px;margin-top:28px;color:#b8aa98;font-size:15px;line-height:1.65;text-align:justify;text-justify:inter-word}
 .ai-shell{width:100%;border:1px solid #51473d;background:#f4ede0;color:var(--ink);box-shadow:12px 12px 0 rgba(224,168,0,.22)}
 .ai-topbar{display:flex;align-items:center;gap:16px;padding:13px 15px;border-bottom:1px solid var(--rule)}
 .ai-identity{display:flex;align-items:center;gap:10px;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}

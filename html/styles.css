@@ -71,3 +71,43 @@ nav .wrap{justify-content:center}
   text-align: justify;
   text-justify: inter-word;
 }
+
+/* Apresentacao estatica com cantos discretos. */
+.hero-card {
+  border-radius: 7px;
+}
+.panel {
+  border-radius: 6px;
+}
+.hero-eyebrow,
+.site-hero h1 .hero-title-main,
+.site-hero h1 .hero-title-sub,
+.site-hero p,
+.hero-actions,
+.site-hero .hero-scene {
+  opacity: 1 !important;
+  transform: none !important;
+  animation: none !important;
+}
+.hero-title-main em,
+.hero-card,
+.comparison-swarm,
+.detail > *,
+.profile-track i,
+.player-profile-track i,
+.match-event {
+  animation: none !important;
+}
+.hero-cards,
+.bar-track,
+.trend,
+.trend-dot,
+.trend-svg .value {
+  transition: none !important;
+}
+
+@media (min-width: 821px) {
+  .site-hero {
+    min-height: calc(100svh - 47px);
+  }
+}
